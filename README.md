@@ -22,11 +22,11 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Versions
 
-* Node - 22.13.0
-* npm - 10.9.0
+- Node - 22.13.0
+- npm - 10.9.0
 
 # Extensions
 
-* PostCSS Language Support
-* ESLint
-* Prettier ESLint
+- PostCSS Language Support
+- ESLint
+- Prettier ESLint
