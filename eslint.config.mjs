@@ -14,6 +14,7 @@ const eslintConfig = [
     'next/core-web-vitals',
     'next/typescript',
     '@rocketseat/eslint-config/next',
+    'prettier',
   ),
 ]
 
