@@ -1,8 +1,7 @@
 /* eslint-disable prettier/prettier */
-// Create the ForgotPassword component with the basic layout
 
 import Image from "next/image";
-// import Link from "next/link";
+import Link from "next/link";
 
 export default function ForgotPassword() {
   return (
@@ -22,10 +21,10 @@ export default function ForgotPassword() {
             Redefinição de senha
           </h2>
           <p className="text-gray-600 text-center mb-6">
-            Digite seu e-mail para que possamos te enviar uma nova senha
+            Digite seu e-mail nesse campo para que possamos te enviar uma nova senha
           </p>
         </div>
-        
+
         <form className="w-full">
           <label className="block mb-2 text-gray-700">Email</label>
           <div className="relative mb-6">
@@ -49,6 +48,12 @@ export default function ForgotPassword() {
             </button>
           </div>
         </form>
+        <p className="text-center text-gray-500 mt-6">
+          Já possui cadastro?{" "}
+          <Link href="/login" className="text-blue-500 hover:underline">
+            Faça seu login
+          </Link>
+        </p>
       </div>
     </div>
   );
