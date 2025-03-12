@@ -11,7 +11,7 @@ export default function ForgotPassword() {
         <div className="flex flex-col items-center">
           <div className="w-16 h-16 mb-4">
             <Image
-              src="/paw-icon.png"
+              src="/images/paw-icon.png"
               alt="Paw icon"
               width={64}
               height={64}
@@ -25,6 +25,7 @@ export default function ForgotPassword() {
             Digite seu e-mail para que possamos te enviar uma nova senha
           </p>
         </div>
+        
         <form className="w-full">
           <label className="block mb-2 text-gray-700">Email</label>
           <div className="relative mb-6">
@@ -33,10 +34,19 @@ export default function ForgotPassword() {
             </span>
             <input
               type="email"
-              placeholder="Enter your email"
+              placeholder="Digite seu e-mail"
               className="w-full pl-10 p-3 border rounded-lg outline-none focus:ring-2 focus:ring-green-400 text-gray-700"
               required
             />
+          </div>
+
+          <div className="flex items-center justify-center">
+            <button
+              type="submit"
+              className="bg-gradient-to-br from-green-400 to-blue-400 text-white px-6 py-3 rounded-lg hover:from-green-500 hover:to-blue-500 transition"
+            >
+              Enviar
+            </button>
           </div>
         </form>
       </div>
