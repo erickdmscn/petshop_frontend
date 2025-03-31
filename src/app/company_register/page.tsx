@@ -1,40 +1,38 @@
 'use client'
 
 import { NextPage } from 'next'
-import React, { useState } from 'react'
+import React from 'react'
+import { useForm, FormProvider } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { companySchema, type CompanyFormData } from '../schemas/companySchema'
+import InputForm from '../components/InputForm'
 
 const CompanyRegister: NextPage = () => {
-  const [formData, setFormData] = useState({
-    companyId: 0,
-    companyName: '',
-    tradeName: '',
-    registrationNumber: '',
-    email: '',
-    phoneNumber: '',
-    address: '',
-    city: '',
-    state: '',
-    country: '',
-    postalCode: '',
-    status: '',
-  })
-
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<{
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [submitStatus, setSubmitStatus] = React.useState<{
     success?: boolean
     message?: string
   }>({})
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-  }
+  const methods = useForm<CompanyFormData>({
+    resolver: zodResolver(companySchema),
+    defaultValues: {
+      companyId: null,
+      companyName: '',
+      tradeName: '',
+      registrationNumber: '',
+      email: '',
+      phoneNumber: '',
+      address: '',
+      city: '',
+      state: '',
+      country: '',
+      postalCode: '',
+      status: '',
+    },
+  })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (data: CompanyFormData) => {
     setIsSubmitting(true)
     setSubmitStatus({})
 
@@ -44,14 +42,15 @@ const CompanyRegister: NextPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(data),
       })
 
-      const data = await response.json()
+      const responseData = await response.json()
 
       if (!response.ok) {
         throw new Error(
-          data.message || 'An error occurred while registering the company',
+          responseData.message ||
+            'An error occurred while registering the company',
         )
       }
 
@@ -60,8 +59,8 @@ const CompanyRegister: NextPage = () => {
         message: 'Company registered successfully!',
       })
 
-      setFormData({
-        companyId: 0,
+      methods.reset({
+        companyId: null,
         companyName: '',
         tradeName: '',
         registrationNumber: '',
@@ -107,158 +106,82 @@ const CompanyRegister: NextPage = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="rounded-lg border border-gray-200 p-4">
-            <h2 className="mb-4 text-xl text-emerald-700">
-              Informações da Empresa
-            </h2>
-            <div className="mb-4 grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-gray-700">Nome da empresa</label>
-                <input
-                  type="text"
+        <FormProvider {...methods}>
+          <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
+            <div className="rounded-lg border border-gray-200 p-4">
+              <h2 className="mb-4 text-xl text-emerald-700">
+                Informações da Empresa
+              </h2>
+              <div className="mb-4 grid grid-cols-2 gap-4">
+                <InputForm
+                  label="Nome da empresa"
                   name="companyName"
-                  value={formData.companyName}
-                  onChange={handleChange}
                   placeholder="Nome da empresa"
-                  className="w-full rounded-md bg-gray-100 p-2"
-                  required
                 />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-gray-700">Nome Comercial</label>
-                <input
-                  type="text"
+                <InputForm
+                  label="Nome Comercial"
                   name="tradeName"
-                  value={formData.tradeName}
-                  onChange={handleChange}
                   placeholder="Nome Comercial"
-                  className="w-full rounded-md bg-gray-100 p-2"
+                  required={false}
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <label className="block text-gray-700">Número de registro</label>
-              <input
-                type="text"
+              <InputForm
+                label="Número de registro"
                 name="registrationNumber"
-                value={formData.registrationNumber}
-                onChange={handleChange}
                 placeholder="Rº"
-                className="w-full rounded-md bg-gray-100 p-2"
-                required
               />
             </div>
-          </div>
 
-          <div className="rounded-lg border border-gray-200 p-4">
-            <h2 className="mb-4 text-xl text-emerald-700">
-              Informações de Contato
-            </h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-gray-700">E-mail</label>
-                <input
-                  type="email"
+            <div className="rounded-lg border border-gray-200 p-4">
+              <h2 className="mb-4 text-xl text-emerald-700">
+                Informações de Contato
+              </h2>
+              <div className="grid grid-cols-2 gap-4">
+                <InputForm
+                  label="E-mail"
                   name="email"
-                  value={formData.email}
-                  onChange={handleChange}
                   placeholder="E-mail"
-                  className="w-full rounded-md bg-gray-100 p-2"
-                  required
+                  type="email"
                 />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-gray-700">Telefone</label>
-                <input
-                  type="tel"
+                <InputForm
+                  label="Telefone"
                   name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
                   placeholder="(xx) xxxxx-xxxx"
-                  className="w-full rounded-md bg-gray-100 p-2"
-                  required
+                  type="tel"
                 />
               </div>
             </div>
-          </div>
 
-          <div className="rounded-lg border border-gray-200 p-4">
-            <h2 className="mb-4 text-xl text-emerald-700">Endereço</h2>
-            <div className="mb-4 grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-gray-700">País</label>
-                <input
-                  type="text"
-                  name="country"
-                  value={formData.country}
-                  onChange={handleChange}
-                  placeholder="País"
-                  className="w-full rounded-md bg-gray-100 p-2"
-                  required
-                />
+            <div className="rounded-lg border border-gray-200 p-4">
+              <h2 className="mb-4 text-xl text-emerald-700">Endereço</h2>
+              <div className="mb-4 grid grid-cols-2 gap-4">
+                <InputForm label="País" name="country" placeholder="País" />
+                <InputForm label="Estado" name="state" placeholder="UF" />
               </div>
-              <div className="space-y-2">
-                <label className="block text-gray-700">Estado</label>
-                <input
-                  type="text"
-                  name="state"
-                  value={formData.state}
-                  onChange={handleChange}
-                  placeholder="UF"
-                  className="w-full rounded-md bg-gray-100 p-2"
-                  required
-                />
-              </div>
-            </div>
-            <div className="mb-4 grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-gray-700">Cidade</label>
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  placeholder="Cidade"
-                  className="w-full rounded-md bg-gray-100 p-2"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-gray-700">Código Postal</label>
-                <input
-                  type="text"
+              <div className="mb-4 grid grid-cols-2 gap-4">
+                <InputForm label="Cidade" name="city" placeholder="Cidade" />
+                <InputForm
+                  label="Código Postal"
                   name="postalCode"
-                  value={formData.postalCode}
-                  onChange={handleChange}
                   placeholder="CEP"
-                  className="w-full rounded-md bg-gray-100 p-2"
-                  required
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <label className="block text-gray-700">Endereço Completo</label>
-              <input
-                type="text"
+              <InputForm
+                label="Endereço Completo"
                 name="address"
-                value={formData.address}
-                onChange={handleChange}
                 placeholder="Endereço"
-                className="w-full rounded-md bg-gray-100 p-2"
-                required
               />
             </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full rounded-md py-3 text-white transition-colors ${isSubmitting ? 'bg-gray-400' : 'bg-emerald-400 hover:bg-emerald-500'}`}
-          >
-            {isSubmitting ? 'ENVIANDO...' : 'CADASTRAR'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full rounded-md py-3 text-white transition-colors ${isSubmitting ? 'bg-gray-400' : 'bg-emerald-400 hover:bg-emerald-500'}`}
+            >
+              {isSubmitting ? 'ENVIANDO...' : 'CADASTRAR'}
+            </button>
+          </form>
+        </FormProvider>
       </div>
     </main>
   )
