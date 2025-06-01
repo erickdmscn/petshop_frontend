@@ -3,15 +3,18 @@ import { Loader } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import InputForm from '../components/InputForm'
 import { useForm, FormProvider } from 'react-hook-form'
 import Footer from '../components/Footer'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { loginSchema, type LoginFormData } from '../schemas/loginSchema' // ajuste o caminho conforme sua estrutura
+import { loginSchema, type LoginFormData } from '../schemas/loginSchema'
+import { login } from '@/services/authService'
 
 export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   const methods = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -26,26 +29,15 @@ export default function Login() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: data.username,
-          password: data.password,
-        }),
+      await login({
+        registrationNumber: data.username, // Supondo que o username é o número de registro
+        password: data.password,
       })
 
-      const responseData = await response.json()
-
-      if (!response.ok) {
-        throw new Error(responseData.message || 'Erro ao fazer login')
-      }
-
-      console.log('Login bem-sucedido', responseData)
+      router.push('/home')
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Erro ao fazer login')
+      router.push('/home')
     } finally {
       setLoading(false)
     }
@@ -96,7 +88,6 @@ export default function Login() {
 
                   {error && <p className="text-center text-red-500">{error}</p>}
 
-                  {/* Botão Acessar */}
                   <button
                     type="submit"
                     className="mt-6 flex w-full items-center justify-center rounded-lg bg-green-500 py-3 text-lg font-semibold text-white transition hover:bg-green-600"

@@ -7,6 +7,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { companySchema, type CompanyFormData } from '../schemas/companySchema'
 import InputForm from '../components/InputForm'
 import Footer from '../components/Footer'
+import { post } from '@/services/fetchService'
+import { ENDPOINTS } from '@/config/api'
+import ProtectedRoute from '@/app/components/ProtectedRoute'
 
 const CompanyRegister: NextPage = () => {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -33,31 +36,32 @@ const CompanyRegister: NextPage = () => {
     },
   })
 
-  const onSubmit = async (data: CompanyFormData) => {
+  const onSubmit = async (formData: CompanyFormData) => {
     setIsSubmitting(true)
     setSubmitStatus({})
 
     try {
-      const response = await fetch('/api/companies', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      })
-
-      const responseData = await response.json()
-
-      if (!response.ok) {
-        throw new Error(
-          responseData.message ||
-            'An error occurred while registering the company',
-        )
+      const adjustedData = {
+        companyName: formData.companyName,
+        tradeName: formData.tradeName,
+        registrationNumber: formData.registrationNumber.replace(/[^0-9]/g, ''),
+        email: formData.email,
+        phoneNumber: formData.phoneNumber.replace(/[^0-9]/g, ''),
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
+        postalCode: formData.postalCode.replace(/[^0-9]/g, ''),
       }
+
+      console.log('Enviando dados ajustados:', adjustedData)
+
+      // Utilizando o serviço de fetch para fazer a requisição autenticada
+      await post(ENDPOINTS.COMPANIES.BASE, adjustedData)
 
       setSubmitStatus({
         success: true,
-        message: 'Company registered successfully!',
+        message: 'Empresa cadastrada com sucesso!',
       })
 
       methods.reset({
@@ -75,13 +79,13 @@ const CompanyRegister: NextPage = () => {
         status: '',
       })
     } catch (error) {
-      console.error('An error occurred while sending data:', error)
+      console.error('Erro ao enviar dados:', error)
       setSubmitStatus({
         success: false,
         message:
           error instanceof Error
             ? error.message
-            : 'An error occurred while registering',
+            : 'Ocorreu um erro ao cadastrar a empresa',
       })
     } finally {
       setIsSubmitting(false)
@@ -89,7 +93,7 @@ const CompanyRegister: NextPage = () => {
   }
 
   return (
-    <>
+    <ProtectedRoute>
       <main className="flex min-h-screen w-full flex-col">
         <div className="flex flex-1">
           <section className="w-[30%] bg-gradient-to-b from-emerald-400 to-cyan-400">
@@ -196,7 +200,7 @@ const CompanyRegister: NextPage = () => {
         </div>
       </main>
       <Footer />
-    </>
+    </ProtectedRoute>
   )
 }
 
