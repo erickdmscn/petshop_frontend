@@ -7,16 +7,38 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { companySchema, type CompanyFormData } from '../schemas/companySchema'
 import InputForm from '../components/InputForm'
 import Footer from '../components/Footer'
-import { post } from '@/services/fetchService'
-import { ENDPOINTS } from '@/config/api'
-import ProtectedRoute from '@/app/components/ProtectedRoute'
+import { createCompanyAction } from '@/actions/companies'
+import { useFormState } from 'react-dom'
+
+// Garante que o tipo inicial tem as mesmas propriedades do ActionResult
+const initialState = {
+  success: false,
+  message: '',
+  error: undefined,
+  data: undefined,
+}
+
+type ActionResult = typeof initialState
 
 const CompanyRegister: NextPage = () => {
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [submitStatus, setSubmitStatus] = React.useState<{
-    success?: boolean
-    message?: string
-  }>({})
+  // Adapta a server action para assinatura do useFormState
+  const actionWithState = async (
+    _prevState: ActionResult,
+    formData: FormData,
+  ): Promise<ActionResult> => {
+    const result = await createCompanyAction(formData)
+    return {
+      success: result.success ?? false,
+      message: result.error
+        ? result.error
+        : result.success
+          ? 'Empresa cadastrada com sucesso!'
+          : '',
+      error: result.error,
+      data: result.data,
+    }
+  }
+  const [state, formAction] = useFormState(actionWithState, initialState)
 
   const methods = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
@@ -36,64 +58,8 @@ const CompanyRegister: NextPage = () => {
     },
   })
 
-  const onSubmit = async (formData: CompanyFormData) => {
-    setIsSubmitting(true)
-    setSubmitStatus({})
-
-    try {
-      const adjustedData = {
-        companyName: formData.companyName,
-        tradeName: formData.tradeName,
-        registrationNumber: formData.registrationNumber.replace(/[^0-9]/g, ''),
-        email: formData.email,
-        phoneNumber: formData.phoneNumber.replace(/[^0-9]/g, ''),
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        country: formData.country,
-        postalCode: formData.postalCode.replace(/[^0-9]/g, ''),
-      }
-
-      console.log('Enviando dados ajustados:', adjustedData)
-
-      // Utilizando o serviço de fetch para fazer a requisição autenticada
-      await post(ENDPOINTS.COMPANIES.BASE, adjustedData)
-
-      setSubmitStatus({
-        success: true,
-        message: 'Empresa cadastrada com sucesso!',
-      })
-
-      methods.reset({
-        companyId: null,
-        companyName: '',
-        tradeName: '',
-        registrationNumber: '',
-        email: '',
-        phoneNumber: '',
-        address: '',
-        city: '',
-        state: '',
-        country: '',
-        postalCode: '',
-        status: '',
-      })
-    } catch (error) {
-      console.error('Erro ao enviar dados:', error)
-      setSubmitStatus({
-        success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Ocorreu um erro ao cadastrar a empresa',
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   return (
-    <ProtectedRoute>
+    <>
       <main className="flex min-h-screen w-full flex-col">
         <div className="flex flex-1">
           <section className="w-[30%] bg-gradient-to-b from-emerald-400 to-cyan-400">
@@ -105,19 +71,16 @@ const CompanyRegister: NextPage = () => {
               CADASTRE SUA EMPRESA
             </h1>
 
-            {submitStatus.message && (
+            {(state.message || state.error) && (
               <div
-                className={`mb-6 rounded-md p-4 ${submitStatus.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                className={`mb-6 rounded-md p-4 ${state.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
               >
-                {submitStatus.message}
+                {state.message}
               </div>
             )}
 
             <FormProvider {...methods}>
-              <form
-                onSubmit={methods.handleSubmit(onSubmit)}
-                className="space-y-8"
-              >
+              <form action={formAction} className="space-y-8">
                 <div className="rounded-lg border border-gray-200 p-4">
                   <h2 className="mb-4 text-xl text-emerald-700">
                     Informações da Empresa
@@ -189,10 +152,9 @@ const CompanyRegister: NextPage = () => {
 
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className={`w-full rounded-md py-3 text-white transition-colors ${isSubmitting ? 'bg-gray-400' : 'bg-emerald-400 hover:bg-emerald-500'}`}
+                  className="w-full rounded-md bg-emerald-400 py-3 text-white transition-colors hover:bg-emerald-500"
                 >
-                  {isSubmitting ? 'ENVIANDO...' : 'CADASTRAR'}
+                  CADASTRAR
                 </button>
               </form>
             </FormProvider>
@@ -200,7 +162,7 @@ const CompanyRegister: NextPage = () => {
         </div>
       </main>
       <Footer />
-    </ProtectedRoute>
+    </>
   )
 }
 

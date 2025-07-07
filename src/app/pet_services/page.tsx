@@ -10,11 +10,9 @@ import {
   Clock,
   Edit,
   Trash2,
-  Eye,
   Scissors,
   Bath,
   Package,
-  XCircle,
   Calendar,
 } from 'lucide-react'
 import CreateService from '../components/CreateService'
@@ -227,7 +225,7 @@ export default function ServicesPage() {
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition-colors hover:bg-blue-700 md:px-4 md:text-base"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm text-white transition-colors hover:bg-emerald-700 md:px-4 md:text-base"
           >
             <Plus className="h-4 w-4 md:h-5 md:w-5" />
             <span className="hidden sm:inline">Novo Serviço</span>
@@ -355,10 +353,9 @@ export default function ServicesPage() {
             filteredServices.map((service) => (
               <div
                 key={service.serviceId}
-                className={`cursor-pointer rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-md md:p-8 ${
+                className={`rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-md md:p-8 ${
                   !service.isActive ? 'opacity-75' : ''
                 }`}
-                onClick={() => setSelectedService(service)}
               >
                 <div className="mb-4 flex items-start justify-between md:mb-6">
                   <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-6">
@@ -455,15 +452,6 @@ export default function ServicesPage() {
 
                 <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3 md:gap-3 md:pt-4">
                   <button
-                    className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 md:p-3"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedService(service)
-                    }}
-                  >
-                    <Eye className="h-4 w-4 md:h-5 md:w-5" />
-                  </button>
-                  <button
                     className="rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50 md:p-3"
                     onClick={(e) => {
                       e.stopPropagation()
@@ -485,125 +473,11 @@ export default function ServicesPage() {
           )}
         </div>
 
-        {/* Modal de Detalhes - Responsivo */}
-        {selectedService && !showEditModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-4 md:p-6">
-              <div className="mb-4 flex items-center justify-between md:mb-6">
-                <h3 className="text-lg font-semibold md:text-xl">
-                  Detalhes do Serviço
-                </h3>
-                <button
-                  onClick={() => setSelectedService(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XCircle className="h-5 w-5 md:h-6 md:w-6" />
-                </button>
-              </div>
-
-              <div className="space-y-3 md:space-y-4">
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                  <div>
-                    <p className="text-xs text-gray-600 md:text-sm">Nome</p>
-                    <p className="text-sm font-medium md:text-base">
-                      {selectedService.name}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 md:text-sm">
-                      Categoria
-                    </p>
-                    <p className="text-sm font-medium md:text-base">
-                      {getCategoryText(selectedService.category)}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs text-gray-600 md:text-sm">Descrição</p>
-                  <p className="text-sm font-medium md:text-base">
-                    {selectedService.descripton}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                  <div>
-                    <p className="text-xs text-gray-600 md:text-sm">Duração</p>
-                    <p className="text-sm font-medium md:text-base">
-                      {selectedService.duration} minutos
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 md:text-sm">Preço</p>
-                    <p className="text-sm font-medium text-green-600 md:text-base">
-                      R$ {selectedService.price.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                  <div>
-                    <p className="text-xs text-gray-600 md:text-sm">
-                      Agendamentos/mês
-                    </p>
-                    <p className="text-sm font-medium md:text-base">
-                      {selectedService.monthlyBookings}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 md:text-sm">Status</p>
-                    <p
-                      className={`text-sm font-medium md:text-base ${selectedService.isActive ? 'text-green-600' : 'text-red-600'}`}
-                    >
-                      {selectedService.isActive ? 'Ativo' : 'Inativo'}
-                    </p>
-                  </div>
-                </div>
-
-                {selectedService.lastBooking && (
-                  <div>
-                    <p className="text-xs text-gray-600 md:text-sm">
-                      Último agendamento
-                    </p>
-                    <p className="text-sm font-medium md:text-base">
-                      {new Date(selectedService.lastBooking).toLocaleDateString(
-                        'pt-BR',
-                      )}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-4 flex gap-2 md:mt-6">
-                <button
-                  className="flex-1 rounded-lg bg-blue-600 py-2 text-sm text-white transition-colors hover:bg-blue-700 md:text-base"
-                  onClick={() => {
-                    setShowEditModal(true)
-                  }}
-                >
-                  Editar Serviço
-                </button>
-                <button
-                  className={`flex-1 rounded-lg border py-2 text-sm transition-colors md:text-base ${
-                    selectedService.isActive
-                      ? 'border-yellow-300 text-yellow-700 hover:bg-yellow-50'
-                      : 'border-green-300 text-green-700 hover:bg-green-50'
-                  }`}
-                >
-                  {selectedService.isActive ? 'Desativar' : 'Ativar'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal de Criação */}
         <CreateService
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
         />
 
-        {/* Modal de Edição */}
         <EditService
           isOpen={showEditModal}
           onClose={() => {

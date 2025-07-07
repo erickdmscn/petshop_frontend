@@ -14,7 +14,6 @@ import {
   AlertCircle,
   Edit,
   Trash2,
-  Eye,
 } from 'lucide-react'
 import Header from '../components/Header'
 import CreateAppointment from '../components/CreateAppointment'
@@ -211,7 +210,7 @@ export default function AppointmentsPage() {
           </div>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition-colors hover:bg-blue-700 md:px-4 md:text-base"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm text-white transition-colors hover:bg-emerald-700 md:px-4 md:text-base"
           >
             <Plus className="h-4 w-4 md:h-5 md:w-5" />
             <span className="hidden sm:inline">Novo Agendamento</span>
@@ -350,8 +349,7 @@ export default function AppointmentsPage() {
             filteredAppointments.map((appointment) => (
               <div
                 key={appointment.appointmentId}
-                className="cursor-pointer rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-md md:p-8"
-                onClick={() => setSelectedAppointment(appointment)}
+                className="rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-md md:p-8"
               >
                 <div className="mb-4 flex items-start justify-between md:mb-6">
                   <div className="flex items-center gap-3 md:gap-6">
@@ -443,15 +441,6 @@ export default function AppointmentsPage() {
 
                 <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3 md:gap-3 md:pt-4">
                   <button
-                    className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 md:p-3"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setSelectedAppointment(appointment)
-                    }}
-                  >
-                    <Eye className="h-4 w-4 md:h-5 md:w-5" />
-                  </button>
-                  <button
                     className="rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50 md:p-3"
                     onClick={(e) => {
                       e.stopPropagation()
@@ -472,94 +461,6 @@ export default function AppointmentsPage() {
             ))
           )}
         </div>
-
-        {selectedAppointment && !isEditModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-4 md:p-8">
-              <div className="mb-4 flex items-center justify-between md:mb-6">
-                <h3 className="text-lg font-bold text-gray-800 md:text-xl">
-                  Detalhes do Agendamento
-                </h3>
-                <button
-                  onClick={() => setSelectedAppointment(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XCircle className="h-5 w-5 md:h-6 md:w-6" />
-                </button>
-              </div>
-              <div className="space-y-3 md:space-y-4">
-                <div className="rounded-lg bg-gray-50 p-3 md:p-4">
-                  <p className="mb-1 text-xs font-medium text-gray-600 md:text-sm">
-                    Cliente
-                  </p>
-                  <p className="text-base font-semibold text-gray-800 md:text-lg">
-                    {selectedAppointment.clientName}
-                  </p>
-                  <p className="text-sm text-gray-600 md:text-base">
-                    {selectedAppointment.clientPhone}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-gray-50 p-3 md:p-4">
-                  <p className="mb-1 text-xs font-medium text-gray-600 md:text-sm">
-                    Pet
-                  </p>
-                  <p className="text-base font-semibold text-gray-800 md:text-lg">
-                    {selectedAppointment.petName} ({selectedAppointment.petType}
-                    )
-                  </p>
-                </div>
-                <div className="rounded-lg bg-gray-50 p-3 md:p-4">
-                  <p className="mb-1 text-xs font-medium text-gray-600 md:text-sm">
-                    Serviço
-                  </p>
-                  <p className="text-base font-semibold text-gray-800 md:text-lg">
-                    {selectedAppointment.service}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-gray-50 p-3 md:p-4">
-                  <p className="mb-1 text-xs font-medium text-gray-600 md:text-sm">
-                    Data e Hora
-                  </p>
-                  <p className="text-base font-semibold text-gray-800 md:text-lg">
-                    {new Date(
-                      selectedAppointment.appointmentDate,
-                    ).toLocaleDateString('pt-BR')}{' '}
-                    às {selectedAppointment.time}
-                  </p>
-                  <p className="text-sm text-gray-600 md:text-base">
-                    Duração: {selectedAppointment.duration}
-                  </p>
-                </div>
-                {selectedAppointment.notes && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 md:p-4">
-                    <p className="mb-1 text-xs font-medium text-amber-800 md:text-sm">
-                      Observações
-                    </p>
-                    <p className="text-sm text-amber-700 md:text-base">
-                      {selectedAppointment.notes}
-                    </p>
-                  </div>
-                )}
-              </div>
-              <div className="mt-6 flex gap-3 md:mt-8">
-                <button
-                  className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 md:py-3 md:text-base"
-                  onClick={() => {
-                    setIsEditModalOpen(true)
-                  }}
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => setSelectedAppointment(null)}
-                  className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 md:py-3 md:text-base"
-                >
-                  Fechar
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         <CreateAppointment
           isOpen={isCreateModalOpen}

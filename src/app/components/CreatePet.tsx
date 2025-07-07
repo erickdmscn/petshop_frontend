@@ -1,7 +1,15 @@
 'use client'
 
-import { useState } from 'react'
 import { XCircle } from 'lucide-react'
+import { useForm, FormProvider } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+  petSchema,
+  type PetFormData,
+  Species,
+  Gender,
+} from '../schemas/petSchema'
+import InputForm from './InputForm'
 
 interface CreatePetProps {
   isOpen: boolean
@@ -9,34 +17,23 @@ interface CreatePetProps {
 }
 
 export default function CreatePet({ isOpen, onClose }: CreatePetProps) {
-  const [formData, setFormData] = useState({
-    userId: '',
-    fullName: '',
-    species: '',
-    breed: '',
-    age: '',
-    birthDate: '',
-    gender: '',
-    needAttention: false,
+  const methods = useForm<PetFormData>({
+    resolver: zodResolver(petSchema),
+    defaultValues: {
+      petsId: null,
+      userId: null,
+      fullName: '',
+      species: Species.CACHORRO,
+      breed: '',
+      age: 0,
+      birthDate: '',
+      gender: Gender.MACHO,
+      needAttention: false,
+    },
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    // Converter os dados para o formato esperado
-    const petData = {
-      petsId: 0,
-      userId: parseInt(formData.userId) || 0,
-      fullName: formData.fullName,
-      species: parseInt(formData.species) || 1,
-      breed: formData.breed,
-      age: parseInt(formData.age) || 0,
-      birthDate: formData.birthDate,
-      gender: parseInt(formData.gender) || 1,
-      needAttention: formData.needAttention,
-    }
-
-    console.log('Dados do pet:', petData)
+  const onSubmit = async (data: PetFormData) => {
+    console.log('Dados do pet:', data)
     onClose()
   }
 
@@ -57,162 +54,112 @@ export default function CreatePet({ isOpen, onClose }: CreatePetProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Dono do Pet
-              </label>
-              <input
-                type="text"
-                value={formData.userId}
-                onChange={(e) =>
-                  setFormData({ ...formData, userId: e.target.value })
-                }
-                className="w-full rounded-lg border border-gray-300 p-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                placeholder="Nome do dono do pet"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Nome do Pet
-              </label>
-              <input
-                type="text"
-                value={formData.fullName}
-                onChange={(e) =>
-                  setFormData({ ...formData, fullName: e.target.value })
-                }
-                className="w-full rounded-lg border border-gray-300 p-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        <FormProvider {...methods}>
+          <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <InputForm
+                label="Nome do Pet"
+                name="fullName"
                 placeholder="Ex: Rex, Mimi, Luna"
-                required
               />
-            </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Espécie
-              </label>
-              <select
-                value={formData.species}
-                onChange={(e) =>
-                  setFormData({ ...formData, species: e.target.value })
-                }
-                className="w-full rounded-lg border border-gray-300 p-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                required
-              >
-                <option value="">Selecione a espécie...</option>
-                <option value="1">Cão</option>
-                <option value="2">Gato</option>
-                <option value="3">Pássaro</option>
-                <option value="4">Outros</option>
-              </select>
-            </div>
+              <div className="space-y-2">
+                <label htmlFor="species" className="block text-gray-700">
+                  Espécie <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="species"
+                  className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+                  {...methods.register('species')}
+                >
+                  <option value={Species.CACHORRO}>Cão</option>
+                  <option value={Species.GATO}>Gato</option>
+                  <option value={Species.AVE}>Ave</option>
+                  <option value={Species.ROEDOR}>Roedor</option>
+                  <option value={Species.REPTIL}>Réptil</option>
+                  <option value={Species.PEIXE}>Peixe</option>
+                  <option value={Species.OUTRO}>Outro</option>
+                </select>
+                {methods.formState.errors.species && (
+                  <p className="text-sm text-red-500">
+                    {methods.formState.errors.species.message}
+                  </p>
+                )}
+              </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Raça
-              </label>
-              <input
-                type="text"
-                value={formData.breed}
-                onChange={(e) =>
-                  setFormData({ ...formData, breed: e.target.value })
-                }
-                className="w-full rounded-lg border border-gray-300 p-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              <InputForm
+                label="Raça"
+                name="breed"
                 placeholder="Ex: Golden Retriever, Persa, SRD"
-                required
+                required={false}
               />
-            </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Idade (anos)
-              </label>
-              <input
+              <InputForm
+                label="Idade (anos)"
+                name="age"
                 type="number"
-                min="0"
-                max="30"
-                value={formData.age}
-                onChange={(e) =>
-                  setFormData({ ...formData, age: e.target.value })
-                }
-                className="w-full rounded-lg border border-gray-300 p-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 placeholder="Ex: 2, 5, 10"
-                required
               />
-            </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Data de Nascimento
-              </label>
-              <input
+              <InputForm
+                label="Data de Nascimento"
+                name="birthDate"
                 type="date"
-                value={formData.birthDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, birthDate: e.target.value })
-                }
-                className="w-full rounded-lg border border-gray-300 p-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                required
+                placeholder="YYYY-MM-DD"
               />
+
+              <div className="space-y-2">
+                <label htmlFor="gender" className="block text-gray-700">
+                  Gênero <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="gender"
+                  className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+                  {...methods.register('gender')}
+                >
+                  <option value={Gender.MACHO}>Macho</option>
+                  <option value={Gender.FEMEA}>Fêmea</option>
+                </select>
+                {methods.formState.errors.gender && (
+                  <p className="text-sm text-red-500">
+                    {methods.formState.errors.gender.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="needAttention"
+                  {...methods.register('needAttention')}
+                  className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                <label
+                  htmlFor="needAttention"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Precisa de atenção especial
+                </label>
+              </div>
             </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Gênero
-              </label>
-              <select
-                value={formData.gender}
-                onChange={(e) =>
-                  setFormData({ ...formData, gender: e.target.value })
-                }
-                className="w-full rounded-lg border border-gray-300 p-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                required
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 md:py-3 md:text-base"
               >
-                <option value="">Selecione o gênero...</option>
-                <option value="1">Macho</option>
-                <option value="2">Fêmea</option>
-              </select>
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="needAttention"
-                checked={formData.needAttention}
-                onChange={(e) =>
-                  setFormData({ ...formData, needAttention: e.target.checked })
-                }
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label
-                htmlFor="needAttention"
-                className="ml-2 text-sm font-medium text-gray-700"
+                Cadastrar Pet
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 md:py-3 md:text-base"
               >
-                Precisa de atenção especial
-              </label>
+                Cancelar
+              </button>
             </div>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 md:py-3 md:text-base"
-            >
-              Cadastrar Pet
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 md:py-3 md:text-base"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
+          </form>
+        </FormProvider>
       </div>
     </div>
   )

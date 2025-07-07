@@ -2,19 +2,46 @@
 import { Loader } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useActionState } from 'react'
+import { useFormStatus } from 'react-dom'
+import { loginAction } from '@/actions'
 import InputForm from '../components/InputForm'
 import { useForm, FormProvider } from 'react-hook-form'
 import Footer from '../components/Footer'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { loginSchema, type LoginFormData } from '../schemas/loginSchema'
-import { login } from '@/services/authService'
+
+interface LoginState {
+  error?: string
+  success?: boolean
+}
+
+function SubmitButton() {
+  const { pending } = useFormStatus()
+
+  return (
+    <button
+      type="submit"
+      className="mt-6 flex w-full items-center justify-center rounded-lg bg-green-500 py-3 text-lg font-semibold text-white transition hover:bg-green-600 disabled:opacity-50"
+      disabled={pending}
+    >
+      {pending ? <Loader className="h-6 w-6 animate-spin" /> : 'ACESSAR'}
+    </button>
+  )
+}
 
 export default function Login() {
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const initialState: LoginState = { error: undefined, success: false }
+
+  const handleLoginAction = async (
+    state: LoginState,
+    formData: FormData,
+  ): Promise<LoginState> => {
+    const result = await loginAction(formData)
+    return result
+  }
+
+  const [state, formAction] = useActionState(handleLoginAction, initialState)
 
   const methods = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -23,25 +50,6 @@ export default function Login() {
       password: '',
     },
   })
-
-  const handleSubmit = async (data: LoginFormData) => {
-    setError('')
-    setLoading(true)
-
-    try {
-      await login({
-        registrationNumber: data.username, // Supondo que o username é o número de registro
-        password: data.password,
-      })
-
-      router.push('/home')
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Erro ao fazer login')
-      router.push('/home')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <>
@@ -68,10 +76,7 @@ export default function Login() {
               </h2>
 
               <FormProvider {...methods}>
-                <form
-                  className="mt-10 space-y-6"
-                  onSubmit={methods.handleSubmit(handleSubmit)}
-                >
+                <form className="mt-10 space-y-6" action={formAction}>
                   <InputForm
                     label="Nome de Usuário"
                     name="username"
@@ -86,19 +91,11 @@ export default function Login() {
                     type="password"
                   />
 
-                  {error && <p className="text-center text-red-500">{error}</p>}
+                  {state?.error && (
+                    <p className="text-center text-red-500">{state.error}</p>
+                  )}
 
-                  <button
-                    type="submit"
-                    className="mt-6 flex w-full items-center justify-center rounded-lg bg-green-500 py-3 text-lg font-semibold text-white transition hover:bg-green-600"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <Loader className="h-6 w-6 animate-spin" />
-                    ) : (
-                      'ACESSAR'
-                    )}
-                  </button>
+                  <SubmitButton />
 
                   <p className="mt-6 text-center text-sm text-gray-600">
                     Esqueceu sua senha?{' '}
