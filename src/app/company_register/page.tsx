@@ -14,8 +14,8 @@ import { useFormState } from 'react-dom'
 const initialState = {
   success: false,
   message: '',
-  error: undefined,
-  data: undefined,
+  error: undefined as string | undefined,
+  data: undefined as any,
 }
 
 type ActionResult = typeof initialState
@@ -26,16 +26,25 @@ const CompanyRegister: NextPage = () => {
     _prevState: ActionResult,
     formData: FormData,
   ): Promise<ActionResult> => {
-    const result = await createCompanyAction(formData)
-    return {
-      success: result.success ?? false,
-      message: result.error
-        ? result.error
-        : result.success
-          ? 'Empresa cadastrada com sucesso!'
-          : '',
-      error: result.error,
-      data: result.data,
+    try {
+      const result = await createCompanyAction(formData)
+      return {
+        success: result.success ?? false,
+        message: result.error
+          ? result.error
+          : result.success
+            ? 'Empresa cadastrada com sucesso!'
+            : '',
+        error: result.error,
+        data: result.data,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Erro interno do servidor',
+        error: 'Erro interno do servidor',
+        data: undefined,
+      }
     }
   }
   const [state, formAction] = useFormState(actionWithState, initialState)

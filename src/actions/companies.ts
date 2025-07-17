@@ -9,6 +9,11 @@ interface ActionResult {
   data?: any
 }
 
+// Função para limpar CNPJ/CPF removendo formatação
+function cleanRegistrationNumber(value: string): string {
+  return value.replace(/[^\d]+/g, '')
+}
+
 export async function getCompaniesAction(pageIndex = 1, pageSize = 10) {
   try {
     const response = await authenticatedFetch(
@@ -30,29 +35,79 @@ export async function createCompanyAction(
   formData: FormData,
 ): Promise<ActionResult> {
   try {
+    // IMPORTANTE: Usando os nomes corretos dos campos que a API espera
     const companyData = {
-      name: formData.get('name') as string,
-      cnpj: formData.get('cnpj') as string,
+      companyName: formData.get('companyName') as string,
+      tradeName: formData.get('tradeName') as string,
+      registrationNumber: cleanRegistrationNumber(
+        formData.get('registrationNumber') as string,
+      ),
       email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
+      phoneNumber: formData.get('phoneNumber') as string,
       address: formData.get('address') as string,
+      city: formData.get('city') as string,
+      state: formData.get('state') as string,
+      country: formData.get('country') as string,
+      postalCode: formData.get('postalCode') as string,
     }
 
-    if (!companyData.name || !companyData.cnpj) {
-      return { error: 'Nome e CNPJ são obrigatórios' }
+    console.log('Dados da empresa a serem enviados:', companyData)
+
+    if (!companyData.companyName || !companyData.registrationNumber) {
+      return { error: 'Nome da empresa e número de registro são obrigatórios' }
     }
+
+    // Garantir que todos os campos string não sejam undefined
+    const sanitizedData = {
+      companyName: companyData.companyName || '',
+      tradeName: companyData.tradeName || '',
+      registrationNumber: companyData.registrationNumber || '',
+      email: companyData.email || '',
+      phoneNumber: companyData.phoneNumber || '',
+      address: companyData.address || '',
+      city: companyData.city || '',
+      state: companyData.state || '',
+      country: companyData.country || '',
+      postalCode: companyData.postalCode || '',
+    }
+
+    console.log('Dados a serem enviados:', sanitizedData)
 
     const response = await authenticatedFetch('/v1/companies', {
       method: 'POST',
-      body: JSON.stringify(companyData),
+      body: sanitizedData as any,
     })
 
+    console.log('Status da resposta:', response.status)
+    console.log('Status text da resposta:', response.statusText)
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      return { error: errorData.message || 'Erro ao criar empresa' }
+      console.error('Erro na resposta do servidor:')
+      console.error('Status:', response.status)
+      console.error('Status Text:', response.statusText)
+
+      let errorMessage = 'Erro desconhecido do servidor'
+      const responseClone = response.clone()
+
+      try {
+        const errorData = await response.json()
+        console.error('Corpo da resposta de erro:', errorData)
+        errorMessage = errorData.message || errorMessage
+      } catch {
+        try {
+          const textResponse = await responseClone.text()
+          console.error('Resposta como texto:', textResponse)
+          errorMessage = textResponse || errorMessage
+        } catch (textError) {
+          console.error('Erro ao ler resposta como texto:', textError)
+        }
+      }
+
+      return { error: errorMessage }
     }
 
     const data = await response.json()
+    console.log('Resposta de sucesso:', data)
     revalidatePath('/companies')
 
     return { success: true, data }
@@ -83,16 +138,39 @@ export async function updateCompanyAction(
 ): Promise<ActionResult> {
   try {
     const companyData = {
-      name: formData.get('name') as string,
-      cnpj: formData.get('cnpj') as string,
+      companyName: formData.get('companyName') as string,
+      tradeName: formData.get('tradeName') as string,
+      registrationNumber: cleanRegistrationNumber(
+        formData.get('registrationNumber') as string,
+      ),
       email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
+      phoneNumber: formData.get('phoneNumber') as string,
       address: formData.get('address') as string,
+      city: formData.get('city') as string,
+      state: formData.get('state') as string,
+      country: formData.get('country') as string,
+      postalCode: formData.get('postalCode') as string,
     }
+
+    // Garantir que todos os campos string não sejam undefined
+    const sanitizedData = {
+      companyName: companyData.companyName || '',
+      tradeName: companyData.tradeName || '',
+      registrationNumber: companyData.registrationNumber || '',
+      email: companyData.email || '',
+      phoneNumber: companyData.phoneNumber || '',
+      address: companyData.address || '',
+      city: companyData.city || '',
+      state: companyData.state || '',
+      country: companyData.country || '',
+      postalCode: companyData.postalCode || '',
+    }
+
+    console.log('Dados a serem enviados para update:', sanitizedData)
 
     const response = await authenticatedFetch(`/v1/companies/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(companyData),
+      body: sanitizedData as any,
     })
 
     if (!response.ok) {
@@ -133,7 +211,9 @@ export async function deleteCompanyAction(
 
 export async function getCompanyByCnpjAction(cnpj: string) {
   try {
-    const response = await authenticatedFetch(`/v1/companies/cnpj/${cnpj}`)
+    // Limpa o CNPJ antes de enviar
+    const cleanCnpj = cleanRegistrationNumber(cnpj)
+    const response = await authenticatedFetch(`/v1/companies/cnpj/${cleanCnpj}`)
 
     if (!response.ok) {
       throw new Error('Empresa não encontrada')

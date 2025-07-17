@@ -33,9 +33,15 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
     const data = await response.json()
     console.log('API Response:', data)
     const token = data.jwt_token || data.token
-    console.log(token)
+    console.log('Token recebido:', token)
+    console.log('Tipo do token:', typeof token)
+    console.log(
+      'Comprimento do token:',
+      token ? token.length : 'null/undefined',
+    )
 
     if (!token) {
+      console.error('Token não encontrado na resposta da API')
       return { error: 'Token não encontrado na resposta' }
     }
 
@@ -51,8 +57,18 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
 
     try {
       const tokenParts = token.split('.')
+      console.log('Número de partes do token:', tokenParts.length)
+      console.log('Partes do token:', tokenParts)
+
       if (tokenParts.length === 3) {
+        console.log('Token JWT válido detectado')
+        console.log('Header (parte 1, tokenParts[0])')
+        console.log('Payload (parte 2, tokenParts[1])')
+        console.log('Signature (parte 3, tokenParts[2])')
+
         const payload = JSON.parse(atob(tokenParts[1]))
+        console.log('Payload decodificado:', payload)
+        console.log('Chaves do payload:', Object.keys(payload))
 
         const userData = {
           id: payload.user_id,
@@ -62,6 +78,8 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
           registrationNumber: payload.RegistrationNumber,
         }
 
+        console.log('Dados do usuário extraídos:', userData)
+
         cookieStore.set('user_data', JSON.stringify(userData), {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
@@ -69,8 +87,13 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
           maxAge: 60 * 60 * 24 * 7,
           path: '/',
         })
+      } else {
+        console.warn('Token não parece ser um JWT válido (não tem 3 partes)')
+        console.log('Estrutura do token recebido:', tokenParts)
       }
     } catch (error) {
+      console.error('Erro ao processar token:', error)
+      console.error('Token que causou erro:', token)
       console.warn('Erro ao extrair dados do usuário:', error)
     }
   } catch (error) {
@@ -78,7 +101,7 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
     return { error: 'Erro interno do servidor' }
   }
 
-  redirect('/dashboard')
+  redirect('/company_register')
 }
 
 export async function logoutAction() {
