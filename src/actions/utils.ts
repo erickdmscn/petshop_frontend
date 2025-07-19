@@ -1,7 +1,7 @@
 'use server'
 
 import { cookies } from 'next/headers'
-import { buildApiUrl } from '@/config/api'
+import { buildApiUrl, ENDPOINTS } from '@/config/api'
 
 export async function getAuthToken() {
   const cookieStore = await cookies()
@@ -57,5 +57,19 @@ export async function requireAuth() {
     return true
   } catch {
     return false
+  }
+}
+
+// Função para buscar dados de endereço pelo CEP
+export const fetchAddressByCEP = async (cep: string) => {
+  try {
+    const response = await fetch(buildApiUrl(`${ENDPOINTS.BRASIL_API_CEP}/${cep}`))
+    if (!response.ok) {
+      throw new Error('Erro ao buscar dados do CEP')
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('Erro ao buscar CEP:', error)
+    throw error
   }
 }

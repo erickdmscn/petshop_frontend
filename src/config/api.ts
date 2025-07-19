@@ -11,4 +11,7 @@ export const ENDPOINTS = {
   PETS: '/v1/pets',
   APPOINTMENTS: '/v1/appointment',
   SERVICES: '/v1/services',
+  MAIL_SEND: '/v1/mailSend',
+  MAIL_VERIFY: '/v1/mailSend/verify',
+  BRASIL_API_CEP: '/v1/BrasilApi/GetCep',
 } as const

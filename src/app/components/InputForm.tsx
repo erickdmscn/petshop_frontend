@@ -7,6 +7,7 @@ interface InputProps {
   placeholder: string
   type?: string
   required?: boolean
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void
 }
 
 const InputForm: React.FC<InputProps> = ({
@@ -15,6 +16,7 @@ const InputForm: React.FC<InputProps> = ({
   placeholder,
   type = 'text',
   required = true,
+  onFocus,
 }) => {
   const {
     register,
@@ -31,6 +33,7 @@ const InputForm: React.FC<InputProps> = ({
         type={type}
         placeholder={placeholder}
         className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+        onFocus={onFocus}
         {...register(name)}
       />
       {errors[name] && (

@@ -1,7 +1,7 @@
 'use client'
 
 import { NextPage } from 'next'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { companySchema, type CompanyFormData } from '../schemas/companySchema'
@@ -9,6 +9,7 @@ import InputForm from '../components/InputForm'
 import Footer from '../components/Footer'
 import { createCompanyAction } from '@/actions/companies'
 import { useFormState } from 'react-dom'
+import { fetchAddressByCEP } from '@/actions/utils'
 
 // Garante que o tipo inicial tem as mesmas propriedades do ActionResult
 const initialState = {
@@ -21,6 +22,9 @@ const initialState = {
 type ActionResult = typeof initialState
 
 const CompanyRegister: NextPage = () => {
+  const [isLoadingCEP, setIsLoadingCEP] = useState(false)
+  const [cepMessage, setCepMessage] = useState('')
+
   // Adapta a server action para assinatura do useFormState
   const actionWithState = async (
     _prevState: ActionResult,
@@ -39,6 +43,7 @@ const CompanyRegister: NextPage = () => {
         data: result.data,
       }
     } catch (error) {
+      console.error('Erro ao cadastrar empresa:', error)
       return {
         success: false,
         message: 'Erro interno do servidor',
@@ -67,6 +72,61 @@ const CompanyRegister: NextPage = () => {
     },
   })
 
+  useEffect(() => {
+    const verifiedEmail = localStorage.getItem('verifiedEmail')
+    if (verifiedEmail) {
+      console.log('E-mail carregado do localStorage:', verifiedEmail)
+      methods.setValue('email', verifiedEmail)
+      localStorage.removeItem('verifiedEmail')
+    }
+  }, [methods])
+
+  // Função para buscar dados de endereço pelo CEP
+  const handleCEPBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const cep = e.target.value.replace(/\D/g, '') // Remove caracteres não numéricos
+
+    if (cep.length === 8) {
+      setIsLoadingCEP(true)
+      setCepMessage('')
+      try {
+        const addressData = await fetchAddressByCEP(cep)
+
+        // Preenche os campos de endereço com os dados retornados
+        methods.setValue(
+          'address',
+          `${addressData.street || ''} ${addressData.neighborhood || ''}`.trim(),
+        )
+        methods.setValue('city', addressData.city || '')
+        methods.setValue('state', addressData.state || '')
+        methods.setValue('country', 'Brasil')
+        methods.setValue('postalCode', cep)
+
+        setCepMessage('Endereço carregado com sucesso!')
+      } catch (error) {
+        console.error('Erro ao buscar dados do CEP:', error)
+        setCepMessage(
+          'Erro ao buscar dados do CEP. Verifique se o número está correto.',
+        )
+      } finally {
+        setIsLoadingCEP(false)
+      }
+    }
+  }
+
+  // Função para aplicar máscara de CEP
+  const applyCEPMask = (value: string) => {
+    const numbers = value.replace(/\D/g, '')
+    return numbers
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .replace(/(-\d{3})\d+?$/, '$1')
+  }
+
+  // Handler para CEP com máscara
+  const handleCEPChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const maskedValue = applyCEPMask(e.target.value)
+    methods.setValue('postalCode', maskedValue)
+  }
+
   return (
     <>
       <main className="flex min-h-screen w-full flex-col">
@@ -90,6 +150,9 @@ const CompanyRegister: NextPage = () => {
 
             <FormProvider {...methods}>
               <form action={formAction} className="space-y-8">
+                {/* Campo hidden para o e-mail */}
+                <input type="hidden" {...methods.register('email')} />
+
                 <div className="rounded-lg border border-gray-200 p-4">
                   <h2 className="mb-4 text-xl text-emerald-700">
                     Informações da Empresa
@@ -108,9 +171,9 @@ const CompanyRegister: NextPage = () => {
                     />
                   </div>
                   <InputForm
-                    label="Número de registro"
+                    label="CNPJ"
                     name="registrationNumber"
-                    placeholder="Rº"
+                    placeholder="00.000.000/0000-00"
                   />
                 </div>
 
@@ -118,13 +181,7 @@ const CompanyRegister: NextPage = () => {
                   <h2 className="mb-4 text-xl text-emerald-700">
                     Informações de Contato
                   </h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    <InputForm
-                      label="E-mail"
-                      name="email"
-                      placeholder="E-mail"
-                      type="email"
-                    />
+                  <div className="grid grid-cols-1 gap-4">
                     <InputForm
                       label="Telefone"
                       name="phoneNumber"
@@ -146,11 +203,37 @@ const CompanyRegister: NextPage = () => {
                       name="city"
                       placeholder="Cidade"
                     />
-                    <InputForm
-                      label="Código Postal"
-                      name="postalCode"
-                      placeholder="CEP"
-                    />
+                    <div className="relative">
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="postalCode"
+                          className="block text-gray-700"
+                        >
+                          Código Postal <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="postalCode"
+                          type="text"
+                          placeholder="00000-000"
+                          className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+                          {...methods.register('postalCode')}
+                          onBlur={handleCEPBlur}
+                          onChange={handleCEPChange}
+                        />
+                      </div>
+                      {isLoadingCEP && (
+                        <div className="absolute right-3 top-8">
+                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
+                        </div>
+                      )}
+                      {cepMessage && (
+                        <p
+                          className={`mt-1 text-sm ${cepMessage.includes('sucesso') ? 'text-green-600' : 'text-red-600'}`}
+                        >
+                          {cepMessage}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <InputForm
                     label="Endereço Completo"
