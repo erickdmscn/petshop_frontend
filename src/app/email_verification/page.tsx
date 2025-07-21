@@ -1,12 +1,12 @@
 'use client'
 
 import { NextPage } from 'next'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import InputForm from '../components/InputForm'
 import Footer from '../components/Footer'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   emailSchema,
   codeSchema,
@@ -17,11 +17,20 @@ import { sendEmailAction, verifyEmailAction } from '@/actions/email'
 
 const EmailVerification: NextPage = () => {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [step, setStep] = useState<'email' | 'code'>('email')
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  // Capturar o código da URL se existir (para debug)
+  useEffect(() => {
+    const codeFromUrl = searchParams.get('code')
+    if (codeFromUrl) {
+      console.log('Código recebido na URL:', codeFromUrl)
+    }
+  }, [searchParams])
 
   const emailMethods = useForm<EmailFormData>({
     resolver: zodResolver(emailSchema),
@@ -67,7 +76,10 @@ const EmailVerification: NextPage = () => {
       setMessage(result.message || 'E-mail verificado com sucesso!')
       localStorage.setItem('verifiedEmail', email)
       setTimeout(() => {
-        router.push('/company_register')
+        // Redirecionar para user_register passando o código que o usuário digitou
+        const redirectUrl = `/user_register?code=${encodeURIComponent(data.code)}`
+        console.log('Redirecionando para user_register com código:', data.code)
+        router.push(redirectUrl)
       }, 1500)
     } else {
       setError(result.error || 'Código inválido')

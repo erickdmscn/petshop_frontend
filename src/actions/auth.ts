@@ -101,7 +101,7 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
     return { error: 'Erro interno do servidor' }
   }
 
-  redirect('/company_register')
+  redirect('/user_register')
 }
 
 export async function logoutAction() {
