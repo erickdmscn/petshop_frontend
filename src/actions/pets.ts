@@ -9,17 +9,15 @@ interface ActionResult {
   data?: any
 }
 
-export async function createPetAction(
-  petData: {
-    fullName: string
-    species: number
-    breed: string
-    age: number
-    birthDate: string
-    gender: number
-    needAttention: boolean
-  },
-): Promise<ActionResult> {
+export async function createPetAction(petData: {
+  fullName: string
+  species: number
+  breed: string
+  age: number
+  birthDate: string
+  gender: number
+  needAttention: boolean
+}): Promise<ActionResult> {
   try {
     // Obter dados do usuário logado
     const userData = await getUserData()
@@ -50,20 +48,22 @@ export async function createPetAction(
 
     if (!response.ok) {
       const errorText = await response.text()
-      
+
       let errorData = {}
       try {
         errorData = JSON.parse(errorText)
       } catch (e) {
         // Resposta não é JSON válido
       }
-      
-      return { error: errorData.message || `Erro ao criar pet (${response.status})` }
+
+      return {
+        error: errorData.message || `Erro ao criar pet (${response.status})`,
+      }
     }
 
     // Verificar se a resposta tem conteúdo
     const responseText = await response.text()
-    
+
     let data = null
     if (responseText.trim()) {
       try {
@@ -152,18 +152,30 @@ export async function getAllPetsAction() {
   }
 }
 
-export async function getPetsByUserAction(userId: number) {
+export async function getPetsByUserAction(
+  userId: number,
+  pageIndex: number = 1,
+  pageSize: number = 10,
+) {
   try {
     const response = await authenticatedFetch(
-      `/v1/pets/GetPetsByUser/${userId}`,
+      `/v1/pets/GetPetsByUser/${userId}?pageIndex=${pageIndex}&pageSize=${pageSize}`,
     )
 
     if (!response.ok) {
-      console.warn(`API retornou status ${response.status} para pets do usuário ${userId}`)
+      console.warn(
+        `API retornou status ${response.status} para pets do usuário ${userId}`,
+      )
       return []
     }
 
-    return await response.json()
+    const data = await response.json()
+
+    if (data && typeof data === 'object' && 'items' in data) {
+      return data.items || []
+    }
+
+    return Array.isArray(data) ? data : []
   } catch (error) {
     console.error('Erro ao buscar pets do usuário:', error)
     return []
