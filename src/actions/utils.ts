@@ -34,7 +34,9 @@ export async function authenticatedFetch(
     headers['Content-Type'] = 'application/json'
   }
 
-  return fetch(buildApiUrl(endpoint), {
+  const url = buildApiUrl(endpoint)
+
+  return fetch(url, {
     ...options,
     headers,
     body,
@@ -63,7 +65,9 @@ export async function requireAuth() {
 // Função para buscar dados de endereço pelo CEP
 export const fetchAddressByCEP = async (cep: string) => {
   try {
-    const response = await fetch(buildApiUrl(`${ENDPOINTS.BRASIL_API_CEP}/${cep}`))
+    const response = await fetch(
+      buildApiUrl(`${ENDPOINTS.BRASIL_API_CEP}/${cep}`),
+    )
     if (!response.ok) {
       throw new Error('Erro ao buscar dados do CEP')
     }

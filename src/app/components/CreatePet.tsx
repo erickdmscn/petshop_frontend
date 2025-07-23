@@ -3,6 +3,7 @@
 import { XCircle } from 'lucide-react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
 import {
   petSchema,
   type PetFormData,
@@ -10,6 +11,7 @@ import {
   Gender,
 } from '../schemas/petSchema'
 import InputForm from './InputForm'
+import { createPetAction } from '@/actions/pets'
 
 interface CreatePetProps {
   isOpen: boolean
@@ -17,6 +19,9 @@ interface CreatePetProps {
 }
 
 export default function CreatePet({ isOpen, onClose }: CreatePetProps) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const methods = useForm<PetFormData>({
     resolver: zodResolver(petSchema),
     defaultValues: {
@@ -33,8 +38,36 @@ export default function CreatePet({ isOpen, onClose }: CreatePetProps) {
   })
 
   const onSubmit = async (data: PetFormData) => {
-    console.log('Dados do pet:', data)
-    onClose()
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const result = await createPetAction({
+        fullName: data.fullName || '',
+        species: data.species,
+        breed: data.breed || '',
+        age: data.age,
+        birthDate: data.birthDate,
+        gender: data.gender,
+        needAttention: data.needAttention,
+      })
+
+      if (result.error) {
+        setError(result.error)
+        return
+      }
+
+      if (result.success) {
+        methods.reset()
+        onClose()
+        // Recarregar a página para atualizar a lista de pets
+        window.location.reload()
+      }
+    } catch (err) {
+      setError('Erro interno do servidor')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (!isOpen) return null
@@ -56,6 +89,11 @@ export default function CreatePet({ isOpen, onClose }: CreatePetProps) {
 
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">
+            {error && (
+              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                {error}
+              </div>
+            )}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <InputForm
                 label="Nome do Pet"
@@ -146,14 +184,16 @@ export default function CreatePet({ isOpen, onClose }: CreatePetProps) {
             <div className="flex gap-3">
               <button
                 type="submit"
-                className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 md:py-3 md:text-base"
+                disabled={isLoading}
+                className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:bg-emerald-400 md:py-3 md:text-base"
               >
-                Cadastrar Pet
+                {isLoading ? 'Cadastrando...' : 'Cadastrar Pet'}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 md:py-3 md:text-base"
+                disabled={isLoading}
+                className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:bg-gray-100 md:py-3 md:text-base"
               >
                 Cancelar
               </button>

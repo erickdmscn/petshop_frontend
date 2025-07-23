@@ -36,10 +36,6 @@ export async function createUserAction(
       country: formData.get('country') as string,
     }
 
-    console.log('=== DEBUG: Dados do usuário a serem enviados ===')
-    console.log('userData:', userData)
-    console.log('code:', code)
-
     if (!userData.fullName || !userData.email || !userData.registrationNumber) {
       return {
         error: 'Nome completo, email e número de registro são obrigatórios',
@@ -47,22 +43,13 @@ export async function createUserAction(
     }
 
     const url = `/v1/users/CreateUser?code=${encodeURIComponent(code)}`
-    console.log('=== DEBUG: URL da requisição ===')
-    console.log('URL:', url)
 
     const response = await authenticatedFetch(url, {
       method: 'POST',
       body: JSON.stringify(userData),
     })
 
-    console.log('=== DEBUG: Resposta da API ===')
-    console.log('Status:', response.status)
-    console.log('Status Text:', response.statusText)
-    console.log('Headers:', Object.fromEntries(response.headers.entries()))
-
     if (!response.ok) {
-      console.log('=== DEBUG: Erro na resposta ===')
-
       // Clonar a resposta para poder ler o corpo múltiplas vezes
       const responseClone = response.clone()
       let errorData: any = {}
@@ -70,15 +57,11 @@ export async function createUserAction(
 
       try {
         errorData = await responseClone.json()
-        console.log('Erro JSON:', errorData)
-      } catch (jsonError) {
-        console.log('Erro ao ler JSON:', jsonError)
-
+      } catch {
         try {
           responseText = await response.text()
-          console.log('Erro como texto:', responseText)
-        } catch (textError) {
-          console.log('Erro ao ler texto:', textError)
+        } catch {
+          // Ignorar erro de leitura do texto
         }
       }
 
@@ -87,22 +70,29 @@ export async function createUserAction(
         errorData.error ||
         responseText ||
         `Erro ${response.status}: ${response.statusText}`
-      console.log('Mensagem de erro final:', errorMessage)
 
       return { error: errorMessage }
     }
 
-    const data = await response.json()
-    console.log('=== DEBUG: Sucesso ===')
-    console.log('Dados retornados:', data)
+    // Verificar se a resposta tem conteúdo antes de tentar fazer parse do JSON
+    const contentLength = response.headers.get('content-length')
+    const hasContent = contentLength && parseInt(contentLength) > 0
+
+    let data = null
+    if (hasContent) {
+      try {
+        data = await response.json()
+      } catch {
+        // Se não conseguir fazer parse do JSON, mas o status é 200, ainda é sucesso
+        data = null
+      }
+    }
 
     revalidatePath('/users')
 
     return { success: true, data }
   } catch (error) {
-    console.error('=== DEBUG: Erro na execução ===')
-    console.error('Erro completo:', error)
-    console.error('Stack trace:', error instanceof Error ? error.stack : 'N/A')
+    console.error('Erro ao criar usuário:', error)
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -198,7 +188,7 @@ export async function deleteUserAction(userId: string): Promise<ActionResult> {
       return { error: 'Erro ao deletar usuário' }
     }
 
-    revalidatePath('/users')
+    revalidatePath('/login')
     return { success: true }
   } catch (error) {
     console.error('Erro ao deletar usuário:', error)

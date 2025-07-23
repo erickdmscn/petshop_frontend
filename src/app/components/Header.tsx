@@ -4,23 +4,27 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, Calendar, Wrench, LogOut } from 'lucide-react'
 
-const Header = () => {
+interface HeaderProps {
+  userId: string
+}
+
+const Header = ({ userId }: HeaderProps) => {
   const pathname = usePathname()
 
   const menuItems = [
     {
       name: 'Home',
-      path: '/home',
+      path: `/${userId}/home`,
       icon: Home,
     },
     {
       name: 'Serviços',
-      path: '/pet_services',
+      path: `/${userId}/pet_services`,
       icon: Wrench,
     },
     {
       name: 'Agendamentos',
-      path: '/appointments',
+      path: `/${userId}/appointments`,
       icon: Calendar,
     },
   ]

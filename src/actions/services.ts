@@ -104,13 +104,14 @@ export async function getAllServicesAction() {
     const response = await authenticatedFetch('/v1/services/GetAllServices')
 
     if (!response.ok) {
-      throw new Error('Erro ao buscar serviços')
+      console.warn(`API retornou status ${response.status} para serviços`)
+      return []
     }
 
     return await response.json()
   } catch (error) {
     console.error('Erro ao buscar serviços:', error)
-    throw new Error('Erro ao buscar serviços')
+    return []
   }
 }
 

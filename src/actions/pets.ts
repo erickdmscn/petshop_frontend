@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { authenticatedFetch } from './utils'
+import { authenticatedFetch, getUserData } from './utils'
 
 interface ActionResult {
   error?: string
@@ -10,37 +10,71 @@ interface ActionResult {
 }
 
 export async function createPetAction(
-  formData: FormData,
+  petData: {
+    fullName: string
+    species: number
+    breed: string
+    age: number
+    birthDate: string
+    gender: number
+    needAttention: boolean
+  },
 ): Promise<ActionResult> {
   try {
-    const petData = {
-      name: formData.get('name') as string,
-      species: formData.get('species') as string,
-      breed: formData.get('breed') as string,
-      age: Number(formData.get('age')),
-      weight: Number(formData.get('weight')),
-      color: formData.get('color') as string,
-      gender: formData.get('gender') as string,
-      userId: Number(formData.get('userId')),
+    // Obter dados do usuário logado
+    const userData = await getUserData()
+    if (!userData?.id) {
+      return { error: 'Usuário não autenticado' }
     }
 
-    if (!petData.name || !petData.species || !petData.userId) {
-      return { error: 'Nome, espécie e usuário são obrigatórios' }
+    const requestData = {
+      petsId: 0, // Não precisa passar na requisição, mas a API espera
+      userId: Number(userData.id),
+      fullName: petData.fullName,
+      species: Number(petData.species),
+      breed: petData.breed || '',
+      age: Number(petData.age),
+      birthDate: petData.birthDate,
+      gender: Number(petData.gender),
+      needAttention: Boolean(petData.needAttention),
+    }
+
+    if (!requestData.fullName || !requestData.species) {
+      return { error: 'Nome e espécie são obrigatórios' }
     }
 
     const response = await authenticatedFetch('/v1/pets/CreatePet', {
       method: 'POST',
-      body: JSON.stringify(petData),
+      body: JSON.stringify(requestData),
     })
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      return { error: errorData.message || 'Erro ao criar pet' }
+      const errorText = await response.text()
+      
+      let errorData = {}
+      try {
+        errorData = JSON.parse(errorText)
+      } catch (e) {
+        // Resposta não é JSON válido
+      }
+      
+      return { error: errorData.message || `Erro ao criar pet (${response.status})` }
     }
 
-    const data = await response.json()
+    // Verificar se a resposta tem conteúdo
+    const responseText = await response.text()
+    
+    let data = null
+    if (responseText.trim()) {
+      try {
+        data = JSON.parse(responseText)
+      } catch (e) {
+        // Se não for JSON mas a requisição foi bem-sucedida, consideramos sucesso
+      }
+    }
+
     revalidatePath('/pets')
-    revalidatePath(`/users/${petData.userId}/pets`)
+    revalidatePath(`/${userData.id}/pets`)
 
     return { success: true, data }
   } catch (error) {
@@ -125,13 +159,14 @@ export async function getPetsByUserAction(userId: number) {
     )
 
     if (!response.ok) {
-      throw new Error('Erro ao buscar pets do usuário')
+      console.warn(`API retornou status ${response.status} para pets do usuário ${userId}`)
+      return []
     }
 
     return await response.json()
   } catch (error) {
     console.error('Erro ao buscar pets do usuário:', error)
-    throw new Error('Erro ao buscar pets do usuário')
+    return []
   }
 }
 

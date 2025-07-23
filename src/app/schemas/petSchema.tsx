@@ -18,7 +18,7 @@ export enum Gender {
 export const petSchema = z.object({
     petsId: z.number().nullable().default(null),
     userId: z.number().nullable().default(null),
-    fullName: z.string().nullable(),
+    fullName: z.string().min(1, 'Nome é obrigatório'),
     species: z.coerce.number().min(1).max(8),
     breed: z.string().nullable().optional(),
     age: z.coerce.number().min(0),

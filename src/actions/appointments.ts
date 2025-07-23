@@ -114,13 +114,16 @@ export async function getAppointmentsByUserAction(userId: number) {
     )
 
     if (!response.ok) {
-      throw new Error('Erro ao buscar agendamentos do usuário')
+      console.warn(
+        `API retornou status ${response.status} para agendamentos do usuário ${userId}`,
+      )
+      return []
     }
 
     return await response.json()
   } catch (error) {
     console.error('Erro ao buscar agendamentos:', error)
-    throw new Error('Erro ao buscar agendamentos')
+    return []
   }
 }
 
