@@ -1,31 +1,67 @@
 'use client'
 
+import { useState } from 'react'
 import { XCircle } from 'lucide-react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { serviceSchema, type ServiceFormData } from '../schemas/serviceSchema'
+import { createServiceAction } from '@/actions/services'
 import InputForm from './InputForm'
 
 interface CreateServiceProps {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void
 }
 
-export default function CreateService({ isOpen, onClose }: CreateServiceProps) {
+export default function CreateService({
+  isOpen,
+  onClose,
+  onSuccess,
+}: CreateServiceProps) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const methods = useForm<ServiceFormData>({
     resolver: zodResolver(serviceSchema),
     defaultValues: {
       serviceId: null,
       name: '',
-      descripton: '',
+      description: '',
       price: 0,
       duration: 1,
     },
   })
 
-  const onSubmit = (data: ServiceFormData) => {
-    console.log('Dados do serviço:', data)
-    onClose()
+  const onSubmit = async (data: ServiceFormData) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      // Criar FormData para enviar para a action
+      const formData = new FormData()
+      formData.append('name', data.name)
+      formData.append('description', data.description)
+      formData.append('price', data.price.toString())
+      formData.append('duration', data.duration.toString())
+
+      const result = await createServiceAction(formData)
+
+      if (result.error) {
+        setError(result.error)
+      } else {
+        // Sucesso - resetar form e fechar modal
+        methods.reset()
+        if (onSuccess) {
+          onSuccess()
+        }
+        onClose()
+      }
+    } catch (err) {
+      setError('Erro inesperado ao criar serviço')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (!isOpen) return null
@@ -45,25 +81,31 @@ export default function CreateService({ isOpen, onClose }: CreateServiceProps) {
 
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">
+            {error && (
+              <div className="rounded-md bg-red-50 p-3">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
             <InputForm
               label="Nome do Serviço"
               name="name"
               placeholder="Ex: Banho e Tosa Completo"
             />
             <div className="space-y-2">
-              <label htmlFor="descripton" className="block text-gray-700">
+              <label htmlFor="description" className="block text-gray-700">
                 Descrição <span className="text-red-500">*</span>
               </label>
               <textarea
-                id="descripton"
-                {...methods.register('descripton')}
+                id="description"
+                {...methods.register('description')}
                 className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
                 placeholder="Descreva o serviço..."
                 rows={3}
               />
-              {methods.formState.errors.descripton && (
+              {methods.formState.errors.description && (
                 <p className="text-sm text-red-500">
-                  {methods.formState.errors.descripton.message}
+                  {methods.formState.errors.description.message}
                 </p>
               )}
             </div>
@@ -84,14 +126,16 @@ export default function CreateService({ isOpen, onClose }: CreateServiceProps) {
             <div className="mt-6 flex gap-2">
               <button
                 type="submit"
-                className="flex-1 rounded-lg bg-emerald-600 py-2 text-white transition-colors hover:bg-emerald-700"
+                disabled={isLoading}
+                className="flex-1 rounded-lg bg-emerald-600 py-2 text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400"
               >
-                Criar Serviço
+                {isLoading ? 'Criando...' : 'Criar Serviço'}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 rounded-lg border border-gray-300 py-2 text-gray-700 transition-colors hover:bg-gray-50"
+                disabled={isLoading}
+                className="flex-1 rounded-lg border border-gray-300 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100"
               >
                 Cancelar
               </button>

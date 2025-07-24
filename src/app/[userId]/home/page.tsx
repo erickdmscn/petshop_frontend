@@ -14,7 +14,10 @@ import { useParams, useRouter } from 'next/navigation'
 import CreateAppointment from '../../components/CreateAppointment'
 import CreatePet from '../../components/CreatePet'
 import CreateService from '../../components/CreateService'
-import { getAppointmentsByUserAction } from '@/actions/appointments'
+import {
+  getAppointmentsByUserAction,
+  getAppointmentServicesAction,
+} from '@/actions/appointments'
 import { getPetsByUserAction } from '@/actions/pets'
 import { getAllServicesAction } from '@/actions/services'
 
@@ -54,11 +57,18 @@ interface Pet {
 interface Service {
   serviceId: number
   name: string
-  description: string
+  description: string | null
   price: number
   duration: number
-  category: string
-  isActive: boolean
+  isActive?: boolean
+}
+
+interface ServicesResponse {
+  data: Service[]
+  totalCount: number
+  pageIndex: number
+  pageSize: number
+  totalPages: number
 }
 
 export default function Home() {
@@ -73,41 +83,68 @@ export default function Home() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [pets, setPets] = useState<Pet[]>([])
   const [services, setServices] = useState<Service[]>([])
+  const [servicesData, setServicesData] = useState<ServicesResponse | null>(
+    null,
+  )
+  const [appointmentServices, setAppointmentServices] = useState<Service[]>([])
+  const [appointmentServicesData, setAppointmentServicesData] =
+    useState<ServicesResponse | null>(null)
   const [loading, setLoading] = useState(true)
 
   // Garantir que sempre sejam arrays válidos
   const safeAppointments = Array.isArray(appointments) ? appointments : []
   const safePets = Array.isArray(pets) ? pets : []
-  const safeServices = Array.isArray(services) ? services : []
+  const safeServices = servicesData?.data || services || []
+
+  // Função para recarregar os dados
+  const loadUserData = async () => {
+    if (!userId) return
+
+    setLoading(true)
+
+    try {
+      // Carregar agendamentos do usuário
+      const appointmentsData = await getAppointmentsByUserAction(userId)
+      setAppointments(appointmentsData || [])
+
+      // Carregar pets do usuário
+      const petsData = await getPetsByUserAction(userId)
+      setPets(petsData || [])
+
+      // Carregar todos os serviços (primeira página com mais itens para o dashboard)
+      const servicesResponse = await getAllServicesAction(1, 50)
+      setServicesData(servicesResponse)
+      setServices(servicesResponse?.data || [])
+
+      // Carregar serviços de appointment
+      const appointmentServicesResponse = await getAppointmentServicesAction(
+        1,
+        50,
+      )
+      setAppointmentServicesData(appointmentServicesResponse)
+      setAppointmentServices(appointmentServicesResponse?.data || [])
+    } catch (err) {
+      console.error('Erro ao carregar dados:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Carregar dados do usuário
   useEffect(() => {
-    const loadUserData = async () => {
-      if (!userId) return
-
-      setLoading(true)
-
-      try {
-        // Carregar agendamentos do usuário
-        const appointmentsData = await getAppointmentsByUserAction(userId)
-        setAppointments(appointmentsData || [])
-
-        // Carregar pets do usuário
-        const petsData = await getPetsByUserAction(userId)
-        setPets(petsData || [])
-
-        // Carregar todos os serviços
-        const servicesData = await getAllServicesAction()
-        setServices(servicesData || [])
-      } catch (err) {
-        console.error('Erro ao carregar dados:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     loadUserData()
   }, [userId])
+
+  // Função para recarregar apenas os serviços
+  const reloadServices = async () => {
+    try {
+      const servicesResponse = await getAllServicesAction(1, 50)
+      setServicesData(servicesResponse)
+      setServices(servicesResponse?.data || [])
+    } catch (err) {
+      console.error('Erro ao recarregar serviços:', err)
+    }
+  }
 
   // Estatísticas baseadas nos dados reais
   const stats = [
@@ -136,7 +173,7 @@ export default function Home() {
       color: 'purple',
       bgColor: 'bg-purple-50',
       iconColor: 'text-purple-600',
-      trend: `${safeServices.filter((s: Service) => s.isActive).length} ativos`,
+      trend: `${safeServices.filter((s: Service) => s.isActive !== false).length} ativos`,
     },
     {
       title: 'Total Investido',
@@ -266,7 +303,7 @@ export default function Home() {
               <span className="hidden sm:inline">Próximos Agendamentos</span>
               <span className="sm:hidden">Agendamentos</span>
             </h3>
-            <button 
+            <button
               onClick={() => router.push(`/${userId}/appointments`)}
               className="text-xs font-medium text-blue-600 hover:text-blue-700 md:text-sm"
             >
@@ -310,45 +347,43 @@ export default function Home() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {safeAppointments
-                      .slice(0, 4)
-                      .map((appointment, index) => (
-                        <tr
-                          key={index}
-                          className="transition-colors hover:bg-gray-50"
-                        >
-                          <td className="py-4 font-medium text-gray-800">
-                            {appointment?.clientName || 'N/A'}
-                          </td>
-                          <td className="py-4 text-gray-600">
-                            {appointment?.petName || 'N/A'}
-                          </td>
-                          <td className="py-4 text-gray-600">
-                            {appointment?.service || 'N/A'}
-                          </td>
-                          <td className="py-4">
-                            <div className="text-sm">
-                              <div className="font-medium text-gray-800">
-                                {appointment?.appointmentDate
-                                  ? new Date(
-                                      appointment.appointmentDate,
-                                    ).toLocaleDateString('pt-BR')
-                                  : '--/--/----'}
-                              </div>
-                              <div className="text-gray-500">
-                                {appointment?.time || '--:--'}
-                              </div>
+                    {safeAppointments.slice(0, 4).map((appointment, index) => (
+                      <tr
+                        key={index}
+                        className="transition-colors hover:bg-gray-50"
+                      >
+                        <td className="py-4 font-medium text-gray-800">
+                          {appointment?.clientName || 'N/A'}
+                        </td>
+                        <td className="py-4 text-gray-600">
+                          {appointment?.petName || 'N/A'}
+                        </td>
+                        <td className="py-4 text-gray-600">
+                          {appointment?.service || 'N/A'}
+                        </td>
+                        <td className="py-4">
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-800">
+                              {appointment?.appointmentDate
+                                ? new Date(
+                                    appointment.appointmentDate,
+                                  ).toLocaleDateString('pt-BR')
+                                : '--/--/----'}
                             </div>
-                          </td>
-                          <td className="py-4">
-                            <span
-                              className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(appointment?.status || '')}`}
-                            >
-                              {getStatusText(appointment?.status || '')}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                            <div className="text-gray-500">
+                              {appointment?.time || '--:--'}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(appointment?.status || '')}`}
+                          >
+                            {getStatusText(appointment?.status || '')}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -435,9 +470,7 @@ export default function Home() {
               {safePets.length === 0 ? (
                 <div className="py-4 text-center">
                   <Heart className="mx-auto mb-2 h-8 w-8 text-gray-400" />
-                  <p className="text-sm text-gray-500">
-                    Nenhum pet cadastrado
-                  </p>
+                  <p className="text-sm text-gray-500">Nenhum pet cadastrado</p>
                 </div>
               ) : (
                 safePets.map((pet: Pet, index: number) => (
@@ -496,18 +529,15 @@ export default function Home() {
                 className="rounded-lg border border-gray-100 bg-gray-50 p-4"
               >
                 <div className="mb-3 flex items-center justify-between">
-                  <h4 className="font-medium text-gray-800">
-                    {service.name}
-                  </h4>
+                  <h4 className="font-medium text-gray-800">{service.name}</h4>
                   <span className="text-sm font-medium text-orange-600">
                     R$ {service.price.toFixed(2)}
                   </span>
                 </div>
                 <p className="mb-3 text-sm text-gray-600">
-                  {service.description}
+                  {service.description || 'Sem descrição'}
                 </p>
                 <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{service.category}</span>
                   <span>{service.duration} min</span>
                 </div>
               </div>
@@ -520,6 +550,8 @@ export default function Home() {
         <CreateAppointment
           isOpen={showCreateAppointment}
           onClose={() => setShowCreateAppointment(false)}
+          userId={userId}
+          onSuccess={loadUserData}
         />
       )}
 
@@ -534,8 +566,9 @@ export default function Home() {
         <CreateService
           isOpen={showCreateService}
           onClose={() => setShowCreateService(false)}
+          onSuccess={reloadServices}
         />
       )}
     </>
   )
-} 
+}

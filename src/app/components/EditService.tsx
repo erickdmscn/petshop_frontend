@@ -13,7 +13,7 @@ interface EditServiceProps {
   service: {
     serviceId: number
     name: string
-    descripton: string
+    description: string
     price: number
     duration: number
   } | null
@@ -29,7 +29,7 @@ export default function EditService({
     defaultValues: {
       serviceId: service?.serviceId ?? null,
       name: service?.name ?? '',
-      descripton: service?.descripton ?? '',
+      description: service?.description ?? '',
       price: service?.price ?? 0,
       duration: service?.duration ?? 1,
     },
@@ -40,7 +40,7 @@ export default function EditService({
       methods.reset({
         serviceId: service.serviceId,
         name: service.name,
-        descripton: service.descripton,
+        description: service.description,
         price: service.price,
         duration: service.duration,
       })
@@ -74,19 +74,19 @@ export default function EditService({
               placeholder="Ex: Banho e Tosa Completo"
             />
             <div className="space-y-2">
-              <label htmlFor="descripton" className="block text-gray-700">
+              <label htmlFor="description" className="block text-gray-700">
                 Descrição <span className="text-red-500">*</span>
               </label>
               <textarea
-                id="descripton"
-                {...methods.register('descripton')}
+                id="description"
+                {...methods.register('description')}
                 className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
                 placeholder="Descreva o serviço..."
                 rows={3}
               />
-              {methods.formState.errors.descripton && (
+              {methods.formState.errors.description && (
                 <p className="text-sm text-red-500">
-                  {methods.formState.errors.descripton.message}
+                  {methods.formState.errors.description.message}
                 </p>
               )}
             </div>

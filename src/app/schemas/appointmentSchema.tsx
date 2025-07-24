@@ -23,7 +23,6 @@ export enum PaymentMethod {
 }
 
 export const appointmentSchema = z.object({
-  appointmentId: z.number().nullable().default(null),
   userId: z.number().nullable().default(null),
   petId: z.coerce.number().min(1, 'Selecione um pet'),
   appointmentDate: z.string().min(1, 'Data obrigatória'),

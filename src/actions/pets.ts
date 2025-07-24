@@ -19,14 +19,13 @@ export async function createPetAction(petData: {
   needAttention: boolean
 }): Promise<ActionResult> {
   try {
-    // Obter dados do usuário logado
     const userData = await getUserData()
     if (!userData?.id) {
       return { error: 'Usuário não autenticado' }
     }
 
     const requestData = {
-      petsId: 0, // Não precisa passar na requisição, mas a API espera
+      petsId: 0,
       userId: Number(userData.id),
       fullName: petData.fullName,
       species: Number(petData.species),
@@ -53,7 +52,7 @@ export async function createPetAction(petData: {
       try {
         errorData = JSON.parse(errorText)
       } catch (e) {
-        // Resposta não é JSON válido
+        console.error('Erro ao criar pet:', e)
       }
 
       return {

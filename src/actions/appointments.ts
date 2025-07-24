@@ -14,19 +14,22 @@ export async function createAppointmentAction(
 ): Promise<ActionResult> {
   try {
     const appointmentData = {
+      userId: Number(formData.get('userId')),
       petId: Number(formData.get('petId')),
-      serviceId: Number(formData.get('serviceId')),
       appointmentDate: formData.get('appointmentDate') as string,
-      appointmentTime: formData.get('appointmentTime') as string,
-      notes: formData.get('notes') as string,
+      statusAppointments: Number(formData.get('statusAppointments')),
+      totalPrice: Number(formData.get('totalPrice')),
+      paymentStatus: Number(formData.get('paymentStatus')),
+      paymentMethod: Number(formData.get('paymentMethod')),
+      notes: (formData.get('notes') as string) || '',
     }
 
     if (
+      !appointmentData.userId ||
       !appointmentData.petId ||
-      !appointmentData.serviceId ||
       !appointmentData.appointmentDate
     ) {
-      return { error: 'Pet, serviço e data são obrigatórios' }
+      return { error: 'Usuário, pet e data são obrigatórios' }
     }
 
     const response = await authenticatedFetch(
@@ -42,7 +45,21 @@ export async function createAppointmentAction(
       return { error: errorData.message || 'Erro ao criar agendamento' }
     }
 
-    const data = await response.json()
+    // Verificar se há conteúdo para parsear
+    let data = null
+    const contentType = response.headers.get('content-type')
+
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text()
+      if (text) {
+        try {
+          data = JSON.parse(text)
+        } catch {
+          console.warn('Resposta não é JSON válido:', text)
+        }
+      }
+    }
+
     revalidatePath('/appointments')
 
     return { success: true, data }
@@ -75,18 +92,69 @@ export async function deleteAppointmentAction(
   }
 }
 
-export async function getAppointmentServicesAction() {
+export async function getAppointmentServicesAction(
+  pageIndex: number = 1,
+  pageSize: number = 10,
+) {
   try {
-    const response = await authenticatedFetch('/v1/appointment/GetAllServices')
+    const params = new URLSearchParams({
+      pageIndex: pageIndex.toString(),
+      pageSize: pageSize.toString(),
+    })
+
+    const url = `/v1/appointment/GetAllServices?${params.toString()}`
+    const response = await authenticatedFetch(url)
 
     if (!response.ok) {
-      throw new Error('Erro ao buscar serviços')
+      console.warn(
+        `API retornou status ${response.status} para serviços de appointment`,
+      )
+      return {
+        data: [],
+        totalCount: 0,
+        pageIndex,
+        pageSize,
+        totalPages: 0,
+      }
     }
 
-    return await response.json()
+    const result = await response.json()
+    console.log('result', result)
+    // Se a API retornar apenas um array, mantemos compatibilidade
+    if (Array.isArray(result)) {
+      return {
+        data: result,
+        totalCount: result.length,
+        pageIndex,
+        pageSize,
+        totalPages: Math.ceil(result.length / pageSize),
+      }
+    }
+
+    // Se a API retornar um objeto com paginação
+    // A API retorna "items" em vez de "data"
+    if (result.items) {
+      return {
+        data: result.items,
+        totalCount: result.totalCount || result.items.length,
+        pageIndex: result.pageIndex || pageIndex,
+        pageSize: result.pageSize || pageSize,
+        totalPages:
+          result.totalPages ||
+          Math.ceil((result.totalCount || result.items.length) / pageSize),
+      }
+    }
+
+    return result
   } catch (error) {
-    console.error('Erro ao buscar serviços:', error)
-    throw new Error('Erro ao buscar serviços')
+    console.error('Erro ao buscar serviços de appointment:', error)
+    return {
+      data: [],
+      totalCount: 0,
+      pageIndex,
+      pageSize,
+      totalPages: 0,
+    }
   }
 }
 

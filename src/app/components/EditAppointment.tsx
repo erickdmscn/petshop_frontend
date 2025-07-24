@@ -37,7 +37,6 @@ export default function EditAppointment({
   const methods = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
-      appointmentId: appointment?.appointmentId ?? null,
       userId: appointment?.userId ?? null,
       petId: appointment?.petId ?? 1,
       appointmentDate: appointment?.appointmentDate ?? '',
@@ -53,7 +52,6 @@ export default function EditAppointment({
   useEffect(() => {
     if (appointment) {
       methods.reset({
-        appointmentId: appointment.appointmentId,
         userId: appointment.userId,
         petId: appointment.petId,
         appointmentDate: appointment.appointmentDate,

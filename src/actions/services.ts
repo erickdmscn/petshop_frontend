@@ -18,7 +18,6 @@ export async function createServiceAction(
       description: formData.get('description') as string,
       price: Number(formData.get('price')),
       duration: Number(formData.get('duration')),
-      category: formData.get('category') as string,
     }
 
     if (!serviceData.name || !serviceData.price) {
@@ -35,7 +34,21 @@ export async function createServiceAction(
       return { error: errorData.message || 'Erro ao criar serviço' }
     }
 
-    const data = await response.json()
+    // Verificar se há conteúdo para parsear
+    let data = null
+    const contentType = response.headers.get('content-type')
+
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text()
+      if (text) {
+        try {
+          data = JSON.parse(text)
+        } catch (e) {
+          console.warn('Resposta não é JSON válido:', text)
+        }
+      }
+    }
+
     revalidatePath('/services')
 
     return { success: true, data }
@@ -55,7 +68,6 @@ export async function updateServiceAction(
       description: formData.get('description') as string,
       price: Number(formData.get('price')),
       duration: Number(formData.get('duration')),
-      category: formData.get('category') as string,
     }
 
     const response = await authenticatedFetch(`/v1/services/${id}`, {
@@ -68,7 +80,21 @@ export async function updateServiceAction(
       return { error: errorData.message || 'Erro ao atualizar serviço' }
     }
 
-    const data = await response.json()
+    // Verificar se há conteúdo para parsear
+    let data = null
+    const contentType = response.headers.get('content-type')
+
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text()
+      if (text) {
+        try {
+          data = JSON.parse(text)
+        } catch (e) {
+          console.warn('Resposta não é JSON válido:', text)
+        }
+      }
+    }
+
     revalidatePath('/services')
     revalidatePath(`/services/${id}`)
 
@@ -99,19 +125,67 @@ export async function deleteServiceAction(
   }
 }
 
-export async function getAllServicesAction() {
+export async function getAllServicesAction(
+  pageIndex: number = 1,
+  pageSize: number = 10,
+) {
   try {
-    const response = await authenticatedFetch('/v1/services/GetAllServices')
+    const params = new URLSearchParams({
+      pageIndex: pageIndex.toString(),
+      pageSize: pageSize.toString(),
+    })
+
+    const url = `/v1/services/GetAllServices?${params.toString()}`
+    const response = await authenticatedFetch(url)
 
     if (!response.ok) {
       console.warn(`API retornou status ${response.status} para serviços`)
-      return []
+      return {
+        data: [],
+        totalCount: 0,
+        pageIndex: pageIndex,
+        pageSize: pageSize,
+        totalPages: 0,
+      }
     }
 
-    return await response.json()
+    const result = await response.json()
+
+    // Se a API retornar apenas um array, mantemos compatibilidade
+    if (Array.isArray(result)) {
+      return {
+        data: result,
+        totalCount: result.length,
+        pageIndex: pageIndex,
+        pageSize: pageSize,
+        totalPages: Math.ceil(result.length / pageSize),
+      }
+    }
+
+    // Se a API retornar um objeto com paginação
+    // A API retorna "items" em vez de "data"
+    if (result.items) {
+      return {
+        data: result.items,
+        totalCount: result.totalCount || result.items.length,
+        pageIndex: result.pageIndex || pageIndex,
+        pageSize: result.pageSize || pageSize,
+        totalPages:
+          result.totalPages ||
+          Math.ceil((result.totalCount || result.items.length) / pageSize),
+      }
+    }
+
+    return result
   } catch (error) {
     console.error('Erro ao buscar serviços:', error)
-    return []
+    return {
+      data: [],
+      totalCount: 0,
+      pageIndex: pageIndex,
+      pageSize: pageSize,
+      totalPages: 0,
+    }
   }
 }
 

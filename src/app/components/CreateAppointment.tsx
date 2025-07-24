@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { XCircle } from 'lucide-react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,23 +11,45 @@ import {
   PaymentStatus,
   PaymentMethod,
 } from '../schemas/appointmentSchema'
+import { createAppointmentAction } from '@/actions/appointments'
+import { getPetsByUserAction } from '@/actions/pets'
 import InputForm from './InputForm'
+
+interface Pet {
+  petsId: number
+  userId: number
+  fullName: string
+  species: number
+  breed: string
+  age: number
+  birthDate: string
+  gender: number
+  needAttention: boolean
+}
 
 interface CreateAppointmentProps {
   isOpen: boolean
   onClose: () => void
+  userId: number
+  onSuccess?: () => void
 }
 
 export default function CreateAppointment({
   isOpen,
   onClose,
+  userId,
+  onSuccess,
 }: CreateAppointmentProps) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [pets, setPets] = useState<Pet[]>([])
+  const [loadingPets, setLoadingPets] = useState(true)
+
   const methods = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
-      appointmentId: null,
-      userId: null,
-      petId: 1,
+      userId: userId,
+      petId: 0, // Será selecionado pelo usuário
       appointmentDate: '',
       statusAppointments: StatusAppointments.AGENDADO,
       totalPrice: 0,
@@ -36,9 +59,60 @@ export default function CreateAppointment({
     },
   })
 
-  const onSubmit = (data: AppointmentFormData) => {
-    console.log('Dados do agendamento:', data)
-    onClose()
+  // Carregar pets do usuário
+  useEffect(() => {
+    const loadPets = async () => {
+      if (!userId) return
+
+      setLoadingPets(true)
+      try {
+        const petsData = await getPetsByUserAction(userId)
+        setPets(petsData || [])
+      } catch (err) {
+        console.error('Erro ao carregar pets:', err)
+      } finally {
+        setLoadingPets(false)
+      }
+    }
+
+    if (isOpen) {
+      loadPets()
+    }
+  }, [userId, isOpen])
+
+  const onSubmit = async (data: AppointmentFormData) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('userId', userId.toString())
+      formData.append('petId', data.petId.toString())
+      formData.append('appointmentDate', data.appointmentDate)
+      formData.append('statusAppointments', data.statusAppointments.toString())
+      formData.append('totalPrice', data.totalPrice.toString())
+      formData.append('paymentStatus', data.paymentStatus.toString())
+      formData.append('paymentMethod', data.paymentMethod.toString())
+      formData.append('notes', data.notes || '')
+
+      const result = await createAppointmentAction(formData)
+
+      if (result.error) {
+        setError(result.error)
+      } else {
+        // Sucesso - resetar form e fechar modal
+        methods.reset()
+        if (onSuccess) {
+          onSuccess()
+        }
+        onClose()
+      }
+    } catch (err) {
+      console.error('Erro ao criar agendamento:', err)
+      setError('Erro interno do servidor')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (!isOpen) return null
@@ -57,6 +131,13 @@ export default function CreateAppointment({
             <XCircle className="h-5 w-5 md:h-6 md:w-6" />
           </button>
         </div>
+
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -68,11 +149,16 @@ export default function CreateAppointment({
                   id="petId"
                   {...methods.register('petId')}
                   className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+                  disabled={loadingPets}
                 >
-                  <option value="1">Rex - Cão</option>
-                  <option value="2">Mimi - Gato</option>
-                  <option value="3">Bolt - Cão</option>
-                  <option value="4">Luna - Gato</option>
+                  <option value="">
+                    {loadingPets ? 'Carregando pets...' : 'Selecione um pet'}
+                  </option>
+                  {pets.map((pet) => (
+                    <option key={pet.petsId} value={pet.petsId}>
+                      {pet.fullName} - {pet.breed}
+                    </option>
+                  ))}
                 </select>
                 {methods.formState.errors.petId && (
                   <p className="text-sm text-red-500">
@@ -186,14 +272,16 @@ export default function CreateAppointment({
             <div className="flex gap-3">
               <button
                 type="submit"
-                className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 md:py-3 md:text-base"
+                disabled={isLoading}
+                className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400 md:py-3 md:text-base"
               >
-                Criar Agendamento
+                {isLoading ? 'Criando...' : 'Criar Agendamento'}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 md:py-3 md:text-base"
+                disabled={isLoading}
+                className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 md:py-3 md:text-base"
               >
                 Cancelar
               </button>

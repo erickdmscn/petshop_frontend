@@ -1,36 +1,43 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
 import { getAllServicesAction } from '@/actions/services'
 
 interface Service {
   serviceId: number
   name: string
-  description: string
+  description: string | null
   price: number
   duration: number
-  category: string
-  isActive: boolean
+  isActive?: boolean
+}
+
+interface ServicesResponse {
+  data: Service[]
+  totalCount: number
+  pageIndex: number
+  pageSize: number
+  totalPages: number
 }
 
 export default function PetServicesPage() {
-  const params = useParams()
-  const userId = Number(params.userId)
-
   const [services, setServices] = useState<Service[]>([])
+  const [servicesData, setServicesData] = useState<ServicesResponse | null>(
+    null,
+  )
   const [loading, setLoading] = useState(true)
 
   // Garantir que sempre seja um array válido
-  const safeServices = Array.isArray(services) ? services : []
+  const safeServices = servicesData?.data || services || []
 
   useEffect(() => {
     const loadServices = async () => {
       setLoading(true)
 
       try {
-        const servicesData = await getAllServicesAction()
-        setServices(servicesData || [])
+        const servicesResponse = await getAllServicesAction(1, 50)
+        setServicesData(servicesResponse)
+        setServices(servicesResponse?.data || [])
       } catch (err) {
         console.error('Erro ao carregar serviços:', err)
       } finally {
@@ -96,13 +103,13 @@ export default function PetServicesPage() {
             <div
               key={index}
               className={`rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-md md:p-8 ${
-                !service.isActive ? 'opacity-75' : ''
+                service.isActive === false ? 'opacity-75' : ''
               }`}
             >
               <div className="mb-4 flex items-start justify-between md:mb-6">
                 <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-6">
                   <div
-                    className={`flex-shrink-0 rounded-full p-2 md:p-4 ${service.isActive ? 'bg-blue-50' : 'bg-gray-100'}`}
+                    className={`flex-shrink-0 rounded-full p-2 md:p-4 ${service.isActive !== false ? 'bg-blue-50' : 'bg-gray-100'}`}
                   >
                     <svg
                       className="h-5 w-5 md:h-8 md:w-8"
@@ -129,36 +136,22 @@ export default function PetServicesPage() {
                       <h3 className="truncate text-base font-bold text-gray-800 md:text-xl">
                         {service.name}
                       </h3>
-                      {!service.isActive && (
+                      {service.isActive === false && (
                         <span className="whitespace-nowrap rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800 md:px-3 md:text-sm">
                           Inativo
                         </span>
                       )}
                     </div>
                     <p className="mb-1 line-clamp-2 text-sm text-gray-600 md:text-base">
-                      {service.description}
-                    </p>
-                    <p className="text-sm font-semibold text-blue-600 md:text-base">
-                      {service.category}
+                      {service.description || 'Sem descrição'}
                     </p>
                   </div>
                 </div>
-                <span
-                  className={`inline-flex flex-shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold md:gap-2 md:px-4 md:py-2 md:text-base ${
-                    service.category === 'banho'
-                      ? 'border-blue-200 bg-blue-100 text-blue-800'
-                      : service.category === 'tosa'
-                        ? 'border-purple-200 bg-purple-100 text-purple-800'
-                        : 'border-gray-200 bg-gray-100 text-gray-800'
-                  }`}
-                >
+                <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800 md:gap-2 md:px-4 md:py-2 md:text-base">
                   <span className="hidden md:inline">
-                    {service.category === 'banho'
-                      ? 'Banho'
-                      : service.category === 'tosa'
-                        ? 'Tosa'
-                        : service.category}
+                    {service.duration} min
                   </span>
+                  <span className="md:hidden">{service.duration}m</span>
                 </span>
               </div>
 
@@ -220,7 +213,7 @@ export default function PetServicesPage() {
                       Status
                     </p>
                     <p className="font-semibold">
-                      {service.isActive ? 'Ativo' : 'Inativo'}
+                      {service.isActive !== false ? 'Ativo' : 'Inativo'}
                     </p>
                   </div>
                 </div>
