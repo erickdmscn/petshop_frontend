@@ -1,15 +1,17 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { XCircle } from 'lucide-react'
-import { useForm, FormProvider } from 'react-hook-form'
+import { useForm, FormProvider, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { serviceSchema, type ServiceFormData } from '../schemas/serviceSchema'
+import { updateServiceAction } from '@/actions/services'
 import InputForm from './InputForm'
 
 interface EditServiceProps {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void
   service: {
     serviceId: number
     name: string
@@ -22,8 +24,12 @@ interface EditServiceProps {
 export default function EditService({
   isOpen,
   onClose,
+  onSuccess,
   service,
 }: EditServiceProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const methods = useForm<ServiceFormData>({
     resolver: zodResolver(serviceSchema),
     defaultValues: {
@@ -47,9 +53,34 @@ export default function EditService({
     }
   }, [service, methods])
 
-  const onSubmit = (data: ServiceFormData) => {
-    console.log('Dados do serviço atualizados:', data)
-    onClose()
+  const onSubmit = async (data: ServiceFormData) => {
+    if (!service?.serviceId) return
+
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('name', data.name)
+      formData.append('description', data.description)
+      formData.append('price', data.price.toString())
+      formData.append('duration', data.duration.toString())
+
+      const result = await updateServiceAction(service.serviceId, formData)
+
+      if (result.error) {
+        setError(result.error)
+        return
+      }
+
+      onSuccess?.()
+      onClose()
+    } catch (err) {
+      setError('Erro interno do servidor')
+      console.error('Erro ao atualizar serviço:', err)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (!isOpen || !service) return null
@@ -62,27 +93,43 @@ export default function EditService({
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
+            disabled={isSubmitting}
           >
             <XCircle className="h-6 w-6" />
           </button>
         </div>
+
+        {error && (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">
             <InputForm
               label="Nome do Serviço"
               name="name"
               placeholder="Ex: Banho e Tosa Completo"
+              disabled={isSubmitting}
             />
             <div className="space-y-2">
               <label htmlFor="description" className="block text-gray-700">
                 Descrição <span className="text-red-500">*</span>
               </label>
-              <textarea
-                id="description"
-                {...methods.register('description')}
-                className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
-                placeholder="Descreva o serviço..."
-                rows={3}
+              <Controller
+                name="description"
+                control={methods.control}
+                render={({ field }) => (
+                  <textarea
+                    id="description"
+                    {...field}
+                    className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-50"
+                    placeholder="Descreva o serviço..."
+                    rows={3}
+                    disabled={isSubmitting}
+                  />
+                )}
               />
               {methods.formState.errors.description && (
                 <p className="text-sm text-red-500">
@@ -96,25 +143,30 @@ export default function EditService({
                 name="duration"
                 type="number"
                 placeholder="Ex: 60, 90, 120"
+                disabled={isSubmitting}
               />
               <InputForm
                 label="Preço (R$)"
                 name="price"
                 type="number"
+                step="0.01"
                 placeholder="0.00"
+                disabled={isSubmitting}
               />
             </div>
             <div className="mt-6 flex gap-2">
               <button
                 type="submit"
-                className="flex-1 rounded-lg bg-emerald-600 py-2 text-white transition-colors hover:bg-emerald-700"
+                disabled={isSubmitting}
+                className="flex-1 rounded-lg bg-emerald-600 py-2 text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Salvar Alterações
+                {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 rounded-lg border border-gray-300 py-2 text-gray-700 transition-colors hover:bg-gray-50"
+                disabled={isSubmitting}
+                className="flex-1 rounded-lg border border-gray-300 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
                 Cancelar
               </button>

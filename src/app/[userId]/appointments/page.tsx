@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { getAppointmentsByUserAction } from '@/actions/appointments'
 import { getPetsByUserAction } from '@/actions/pets'
 import CreateAppointment from '../../components/CreateAppointment'
+import DeleteAppointmentModal from '../../components/DeleteAppointmentModal'
 
 interface AppointmentService {
   serviceId: number
@@ -39,7 +40,6 @@ interface Appointment {
   services: AppointmentService[]
 }
 
-// Enums para mapeamento dos status
 const PaymentStatus = {
   1: 'Pendente',
   2: 'Pago',
@@ -70,11 +70,16 @@ export default function AppointmentsPage() {
   const [pets, setPets] = useState<Pet[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateAppointment, setShowCreateAppointment] = useState(false)
+  const [showDeleteAppointment, setShowDeleteAppointment] = useState(false)
+  const [selectedAppointmentForDelete, setSelectedAppointmentForDelete] =
+    useState<{
+      appointmentId: number
+      petName: string
+      appointmentDate: string
+    } | null>(null)
 
-  // Garantir que sempre seja um array válido
   const safeAppointments = appointments || []
 
-  // Função para obter o nome do pet pelo ID
   const getPetName = (petId: number): string => {
     const pet = pets.find((p) => p.petsId === petId)
     return pet ? pet.fullName : `Pet ${petId}`
@@ -84,7 +89,6 @@ export default function AppointmentsPage() {
     setLoading(true)
 
     try {
-      // Carregar agendamentos e pets em paralelo
       const [appointmentsData, petsData] = await Promise.all([
         getAppointmentsByUserAction(userId),
         getPetsByUserAction(userId),
@@ -97,6 +101,20 @@ export default function AppointmentsPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleDeleteAppointment = (appointment: Appointment) => {
+    setSelectedAppointmentForDelete({
+      appointmentId: appointment.appointmentId,
+      petName: getPetName(appointment.petId),
+      appointmentDate: appointment.appointmentDate,
+    })
+    setShowDeleteAppointment(true)
+  }
+
+  const handleCloseDeleteAppointment = () => {
+    setShowDeleteAppointment(false)
+    setSelectedAppointmentForDelete(null)
   }
 
   useEffect(() => {
@@ -127,7 +145,7 @@ export default function AppointmentsPage() {
         </div>
         <button
           onClick={() => setShowCreateAppointment(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 md:px-6 md:py-3 md:text-base"
+          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 md:px-6 md:py-3 md:text-base"
         >
           <Plus className="h-4 w-4 md:h-5 md:w-5" />
           Novo Agendamento
@@ -319,6 +337,20 @@ export default function AppointmentsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Botão de deletar no canto inferior direito */}
+              <div className="flex justify-end pt-4">
+                <button
+                  onClick={() => handleDeleteAppointment(appointment)}
+                  className="flex items-center gap-1 rounded-lg bg-red-50 px-2 py-1 text-red-600 transition-colors hover:bg-red-100 md:gap-2 md:px-3 md:py-2"
+                  title="Deletar agendamento"
+                >
+                  <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden text-sm font-medium md:inline">
+                    Deletar
+                  </span>
+                </button>
+              </div>
             </div>
           ))
         )}
@@ -330,6 +362,15 @@ export default function AppointmentsPage() {
           onClose={() => setShowCreateAppointment(false)}
           userId={userId}
           onSuccess={loadAppointments}
+        />
+      )}
+
+      {showDeleteAppointment && selectedAppointmentForDelete && (
+        <DeleteAppointmentModal
+          isOpen={showDeleteAppointment}
+          onClose={handleCloseDeleteAppointment}
+          onSuccess={loadAppointments}
+          appointment={selectedAppointmentForDelete}
         />
       )}
     </>

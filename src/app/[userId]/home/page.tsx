@@ -327,7 +327,7 @@ export default function Home() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {safeAppointments.slice(0, 10).map((appointment) => (
+                    {safeAppointments.slice(0, 14).map((appointment) => (
                       <tr
                         key={appointment.appointmentId}
                         className="transition-colors hover:bg-gray-50"
@@ -379,7 +379,7 @@ export default function Home() {
               </div>
 
               <div className="space-y-3 md:hidden">
-                {safeAppointments.slice(0, 10).map((appointment) => (
+                {safeAppointments.slice(0, 14).map((appointment) => (
                   <div
                     key={appointment.appointmentId}
                     className="rounded-lg border border-gray-100 bg-gray-50 p-4"

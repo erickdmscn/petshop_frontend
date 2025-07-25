@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Edit2, Trash2 } from 'lucide-react'
 import { getAllServicesAction } from '@/actions/services'
 import CreateService from '../../components/CreateService'
+import EditService from '../../components/EditService'
+import DeleteServiceModal from '../../components/DeleteServiceModal'
 
 interface Service {
   serviceId: number
@@ -29,6 +31,19 @@ export default function PetServicesPage() {
   )
   const [loading, setLoading] = useState(true)
   const [showCreateService, setShowCreateService] = useState(false)
+  const [showEditService, setShowEditService] = useState(false)
+  const [showDeleteService, setShowDeleteService] = useState(false)
+  const [selectedService, setSelectedService] = useState<{
+    serviceId: number
+    name: string
+    description: string
+    price: number
+    duration: number
+  } | null>(null)
+  const [selectedServiceForDelete, setSelectedServiceForDelete] = useState<{
+    serviceId: number
+    name: string
+  } | null>(null)
 
   // Garantir que sempre seja um array válido
   const safeServices = servicesData?.data || services || []
@@ -45,6 +60,34 @@ export default function PetServicesPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleEditService = (service: Service) => {
+    // Converter description null para string vazia para compatibilidade com EditService
+    const serviceForEdit = {
+      ...service,
+      description: service.description || '',
+    }
+    setSelectedService(serviceForEdit)
+    setShowEditService(true)
+  }
+
+  const handleCloseEditService = () => {
+    setShowEditService(false)
+    setSelectedService(null)
+  }
+
+  const handleDeleteService = (service: Service) => {
+    setSelectedServiceForDelete({
+      serviceId: service.serviceId,
+      name: service.name,
+    })
+    setShowDeleteService(true)
+  }
+
+  const handleCloseDeleteService = () => {
+    setShowDeleteService(false)
+    setSelectedServiceForDelete(null)
   }
 
   useEffect(() => {
@@ -230,6 +273,30 @@ export default function PetServicesPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Botões de editar e deletar no canto inferior direito */}
+              <div className="flex justify-end gap-2 pt-4">
+                <button
+                  onClick={() => handleEditService(service)}
+                  className="flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-blue-600 transition-colors hover:bg-blue-100 md:gap-2 md:px-3 md:py-2"
+                  title="Editar serviço"
+                >
+                  <Edit2 className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden text-sm font-medium md:inline">
+                    Editar
+                  </span>
+                </button>
+                <button
+                  onClick={() => handleDeleteService(service)}
+                  className="flex items-center gap-1 rounded-lg bg-red-50 px-2 py-1 text-red-600 transition-colors hover:bg-red-100 md:gap-2 md:px-3 md:py-2"
+                  title="Deletar serviço"
+                >
+                  <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden text-sm font-medium md:inline">
+                    Deletar
+                  </span>
+                </button>
+              </div>
             </div>
           ))
         )}
@@ -240,6 +307,24 @@ export default function PetServicesPage() {
           isOpen={showCreateService}
           onClose={() => setShowCreateService(false)}
           onSuccess={loadServices}
+        />
+      )}
+
+      {showEditService && selectedService && (
+        <EditService
+          isOpen={showEditService}
+          onClose={handleCloseEditService}
+          onSuccess={loadServices}
+          service={selectedService}
+        />
+      )}
+
+      {showDeleteService && selectedServiceForDelete && (
+        <DeleteServiceModal
+          isOpen={showDeleteService}
+          onClose={handleCloseDeleteService}
+          onSuccess={loadServices}
+          service={selectedServiceForDelete}
         />
       )}
     </>

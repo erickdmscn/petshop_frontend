@@ -15,7 +15,7 @@ export async function createServiceAction(
   try {
     const serviceData = {
       name: formData.get('name') as string,
-      description: formData.get('description') as string,
+      descripton: formData.get('description') as string,
       price: Number(formData.get('price')),
       duration: Number(formData.get('duration')),
     }
@@ -34,7 +34,6 @@ export async function createServiceAction(
       return { error: errorData.message || 'Erro ao criar serviço' }
     }
 
-    // Verificar se há conteúdo para parsear
     let data = null
     const contentType = response.headers.get('content-type')
 
@@ -43,7 +42,7 @@ export async function createServiceAction(
       if (text) {
         try {
           data = JSON.parse(text)
-        } catch (e) {
+        } catch {
           console.warn('Resposta não é JSON válido:', text)
         }
       }
@@ -65,7 +64,7 @@ export async function updateServiceAction(
   try {
     const serviceData = {
       name: formData.get('name') as string,
-      description: formData.get('description') as string,
+      descripton: formData.get('description') as string,
       price: Number(formData.get('price')),
       duration: Number(formData.get('duration')),
     }
@@ -80,7 +79,6 @@ export async function updateServiceAction(
       return { error: errorData.message || 'Erro ao atualizar serviço' }
     }
 
-    // Verificar se há conteúdo para parsear
     let data = null
     const contentType = response.headers.get('content-type')
 
@@ -89,7 +87,7 @@ export async function updateServiceAction(
       if (text) {
         try {
           data = JSON.parse(text)
-        } catch (e) {
+        } catch {
           console.warn('Resposta não é JSON válido:', text)
         }
       }
@@ -143,30 +141,34 @@ export async function getAllServicesAction(
       return {
         data: [],
         totalCount: 0,
-        pageIndex: pageIndex,
-        pageSize: pageSize,
+        pageIndex,
+        pageSize,
         totalPages: 0,
       }
     }
 
     const result = await response.json()
 
-    // Se a API retornar apenas um array, mantemos compatibilidade
+    const mapService = (service: any) => ({
+      ...service,
+      description: service.descripton || null,
+    })
+
     if (Array.isArray(result)) {
+      const mappedData = result.map(mapService)
       return {
-        data: result,
+        data: mappedData,
         totalCount: result.length,
-        pageIndex: pageIndex,
-        pageSize: pageSize,
+        pageIndex,
+        pageSize,
         totalPages: Math.ceil(result.length / pageSize),
       }
     }
 
-    // Se a API retornar um objeto com paginação
-    // A API retorna "items" em vez de "data"
     if (result.items) {
+      const mappedData = result.items.map(mapService)
       return {
-        data: result.items,
+        data: mappedData,
         totalCount: result.totalCount || result.items.length,
         pageIndex: result.pageIndex || pageIndex,
         pageSize: result.pageSize || pageSize,
@@ -182,8 +184,8 @@ export async function getAllServicesAction(
     return {
       data: [],
       totalCount: 0,
-      pageIndex: pageIndex,
-      pageSize: pageSize,
+      pageIndex,
+      pageSize,
       totalPages: 0,
     }
   }
@@ -199,7 +201,12 @@ export async function getServiceByIdAction(serviceId: number) {
       throw new Error('Serviço não encontrado')
     }
 
-    return await response.json()
+    const service = await response.json()
+
+    return {
+      ...service,
+      description: service.descripton || null,
+    }
   } catch (error) {
     console.error('Erro ao buscar serviço:', error)
     throw new Error('Erro ao buscar serviço')
@@ -216,7 +223,18 @@ export async function getServicesByNameAction(name: string) {
       throw new Error('Serviços não encontrados')
     }
 
-    return await response.json()
+    const services = await response.json()
+
+    const mapService = (service: any) => ({
+      ...service,
+      description: service.descripton || null,
+    })
+
+    if (Array.isArray(services)) {
+      return services.map(mapService)
+    }
+
+    return mapService(services)
   } catch (error) {
     console.error('Erro ao buscar serviços por nome:', error)
     throw new Error('Erro ao buscar serviços')
