@@ -41,10 +41,10 @@ export default function EditAppointment({
       petId: appointment?.petId ?? 1,
       appointmentDate: appointment?.appointmentDate ?? '',
       statusAppointments:
-        appointment?.statusAppointments ?? StatusAppointments.AGENDADO,
+        appointment?.statusAppointments ?? StatusAppointments.SCHEDULED,
       totalPrice: appointment?.totalPrice ?? 0,
-      paymentStatus: appointment?.paymentStatus ?? PaymentStatus.PENDENTE,
-      paymentMethod: appointment?.paymentMethod ?? PaymentMethod.DINHEIRO,
+      paymentStatus: appointment?.paymentStatus ?? PaymentStatus.PENDING,
+      paymentMethod: appointment?.paymentMethod ?? PaymentMethod.CASH,
       notes: appointment?.notes ?? '',
     },
   })
@@ -111,7 +111,7 @@ export default function EditAppointment({
               <InputForm
                 label="Data do Agendamento"
                 name="appointmentDate"
-                type="datetime-local"
+                type="date"
                 placeholder=""
               />
               <div className="space-y-2">
@@ -126,16 +126,14 @@ export default function EditAppointment({
                   {...methods.register('statusAppointments')}
                   className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
                 >
-                  <option value={StatusAppointments.AGENDADO}>Agendado</option>
-                  <option value={StatusAppointments.EM_ANDAMENTO}>
+                  <option value={StatusAppointments.SCHEDULED}>Agendado</option>
+                  <option value={StatusAppointments.IN_PROGRESS}>
                     Em Andamento
                   </option>
-                  <option value={StatusAppointments.CONCLUIDO}>
+                  <option value={StatusAppointments.COMPLETED}>
                     Concluído
                   </option>
-                  <option value={StatusAppointments.CANCELADO}>
-                    Cancelado
-                  </option>
+                  <option value={StatusAppointments.CANCELED}>Cancelado</option>
                 </select>
                 {methods.formState.errors.statusAppointments && (
                   <p className="text-sm text-red-500">
@@ -158,10 +156,9 @@ export default function EditAppointment({
                   {...methods.register('paymentStatus')}
                   className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
                 >
-                  <option value={PaymentStatus.PENDENTE}>Pendente</option>
-                  <option value={PaymentStatus.PAGO}>Pago</option>
-                  <option value={PaymentStatus.CANCELADO}>Cancelado</option>
-                  <option value={PaymentStatus.REEMBOLSADO}>Reembolsado</option>
+                  <option value={PaymentStatus.PENDING}>Pendente</option>
+                  <option value={PaymentStatus.PAID}>Pago</option>
+                  <option value={PaymentStatus.CANCELED}>Cancelado</option>
                 </select>
                 {methods.formState.errors.paymentStatus && (
                   <p className="text-sm text-red-500">
@@ -178,15 +175,15 @@ export default function EditAppointment({
                   {...methods.register('paymentMethod')}
                   className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
                 >
-                  <option value={PaymentMethod.DINHEIRO}>Dinheiro</option>
-                  <option value={PaymentMethod.DEBITO}>Cartão de Débito</option>
-                  <option value={PaymentMethod.CREDITO}>
+                  <option value={PaymentMethod.NONE}>Nenhum</option>
+                  <option value={PaymentMethod.CASH}>Dinheiro</option>
+                  <option value={PaymentMethod.DEBIT_CARD}>
+                    Cartão de Débito
+                  </option>
+                  <option value={PaymentMethod.CREDIT_CARD}>
                     Cartão de Crédito
                   </option>
                   <option value={PaymentMethod.PIX}>PIX</option>
-                  <option value={PaymentMethod.TRANSFERENCIA}>
-                    Transferência Bancária
-                  </option>
                 </select>
                 {methods.formState.errors.paymentMethod && (
                   <p className="text-sm text-red-500">

@@ -14,10 +14,7 @@ import { useParams, useRouter } from 'next/navigation'
 import CreateAppointment from '../../components/CreateAppointment'
 import CreatePet from '../../components/CreatePet'
 import CreateService from '../../components/CreateService'
-import {
-  getAppointmentsByUserAction,
-  getAppointmentServicesAction,
-} from '@/actions/appointments'
+import { getAppointmentsByUserAction } from '@/actions/appointments'
 import { getPetsByUserAction } from '@/actions/pets'
 import { getAllServicesAction } from '@/actions/services'
 
@@ -31,15 +28,7 @@ interface Appointment {
   paymentStatus: number
   paymentMethod: number
   notes: string
-  clientName: string
-  clientPhone: string
-  clientEmail: string
-  petName: string
-  petType: string
-  service: string
-  time: string
-  duration: string
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+  services: any[]
 }
 
 interface Pet {
@@ -86,9 +75,7 @@ export default function Home() {
   const [servicesData, setServicesData] = useState<ServicesResponse | null>(
     null,
   )
-  const [appointmentServices, setAppointmentServices] = useState<Service[]>([])
-  const [appointmentServicesData, setAppointmentServicesData] =
-    useState<ServicesResponse | null>(null)
+
   const [loading, setLoading] = useState(true)
 
   // Garantir que sempre sejam arrays válidos
@@ -116,13 +103,8 @@ export default function Home() {
       setServicesData(servicesResponse)
       setServices(servicesResponse?.data || [])
 
-      // Carregar serviços de appointment
-      const appointmentServicesResponse = await getAppointmentServicesAction(
-        1,
-        50,
-      )
-      setAppointmentServicesData(appointmentServicesResponse)
-      setAppointmentServices(appointmentServicesResponse?.data || [])
+      // Carregar serviços de appointment (comentado por enquanto)
+      // const appointmentServicesResponse = await getAppointmentServicesAction(1, 50)
     } catch (err) {
       console.error('Erro ao carregar dados:', err)
     } finally {
@@ -146,6 +128,28 @@ export default function Home() {
     }
   }
 
+  // Função para mapear status numérico para texto legível
+  const getStatusFromNumber = (statusNum: number): string => {
+    switch (statusNum) {
+      case 1:
+        return 'pending' // SCHEDULED
+      case 2:
+        return 'confirmed' // IN_PROGRESS
+      case 3:
+        return 'completed' // COMPLETED
+      case 4:
+        return 'cancelled' // CANCELED
+      default:
+        return 'pending'
+    }
+  }
+
+  // Função para obter nome do pet (temporário até ter junção no backend)
+  const getPetName = (petId: number): string => {
+    const pet = safePets.find((p) => p.petsId === petId)
+    return pet?.fullName || `Pet #${petId}`
+  }
+
   // Estatísticas baseadas nos dados reais
   const stats = [
     {
@@ -155,7 +159,7 @@ export default function Home() {
       color: 'blue',
       bgColor: 'bg-blue-50',
       iconColor: 'text-blue-600',
-      trend: `${safeAppointments.filter((a) => a?.status === 'confirmed').length} confirmados`,
+      trend: `${safeAppointments.filter((a) => getStatusFromNumber(a.statusAppointments) === 'confirmed').length} confirmados`,
     },
     {
       title: 'Pets',
@@ -197,44 +201,14 @@ export default function Home() {
       icon: User,
     },
     ...safeAppointments.slice(0, 3).map((appointment) => ({
-      action: `Agendamento ${appointment?.status === 'confirmed' ? 'confirmado' : 'pendente'}`,
-      date: appointment?.appointmentDate
+      action: `Agendamento ${getStatusFromNumber(appointment.statusAppointments) === 'confirmed' ? 'confirmado' : 'pendente'}`,
+      date: appointment.appointmentDate
         ? new Date(appointment.appointmentDate).toLocaleDateString('pt-BR')
         : '--/--/----',
-      time: appointment?.time || '--:--',
+      time: '--:--', // Removido horário
       icon: Calendar,
     })),
   ]
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'completed':
-        return 'bg-blue-100 text-blue-800'
-      case 'cancelled':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'Confirmado'
-      case 'pending':
-        return 'Pendente'
-      case 'completed':
-        return 'Concluído'
-      case 'cancelled':
-        return 'Cancelado'
-      default:
-        return status
-    }
-  }
 
   if (loading) {
     return (
@@ -297,18 +271,27 @@ export default function Home() {
 
       <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-3">
         <div className="rounded-xl border bg-white p-4 shadow-sm md:p-6 lg:col-span-2">
-          <div className="mb-4 flex items-center justify-between md:mb-6">
+          <div className="mb-4 flex flex-col gap-3 md:mb-6 md:flex-row md:items-center md:justify-between">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-800 md:text-xl">
               <Calendar className="h-4 w-4 text-blue-600 md:h-5 md:w-5" />
               <span className="hidden sm:inline">Próximos Agendamentos</span>
               <span className="sm:hidden">Agendamentos</span>
             </h3>
-            <button
-              onClick={() => router.push(`/${userId}/appointments`)}
-              className="text-xs font-medium text-blue-600 hover:text-blue-700 md:text-sm"
-            >
-              Ver todos
-            </button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <button
+                onClick={() => setShowCreateAppointment(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+              >
+                <Plus className="h-4 w-4" />
+                Cadastrar Agendamento
+              </button>
+              <button
+                onClick={() => router.push(`/${userId}/appointments`)}
+                className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                Ver mais informações
+              </button>
+            </div>
           </div>
 
           {safeAppointments.length === 0 ? (
@@ -317,10 +300,10 @@ export default function Home() {
               <p className="text-gray-500">Nenhum agendamento encontrado</p>
               <button
                 onClick={() => setShowCreateAppointment(true)}
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
               >
                 <Plus className="h-4 w-4" />
-                Novo Agendamento
+                Cadastrar Agendamento
               </button>
             </div>
           ) : (
@@ -330,56 +313,63 @@ export default function Home() {
                   <thead>
                     <tr className="border-b border-gray-100 text-left">
                       <th className="pb-3 text-sm font-medium text-gray-600">
-                        Cliente
-                      </th>
-                      <th className="pb-3 text-sm font-medium text-gray-600">
                         Pet
                       </th>
                       <th className="pb-3 text-sm font-medium text-gray-600">
-                        Serviço
+                        Data do Agendamento
                       </th>
-                      <th className="pb-3 text-sm font-medium text-gray-600">
-                        Data/Hora
+                      <th className="w-1/3 pb-3 text-sm font-medium text-gray-600">
+                        Serviços
                       </th>
-                      <th className="pb-3 text-sm font-medium text-gray-600">
-                        Status
+                      <th className="pb-3 text-right text-sm font-medium text-gray-600">
+                        Valor Total
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {safeAppointments.slice(0, 4).map((appointment, index) => (
+                    {safeAppointments.slice(0, 10).map((appointment) => (
                       <tr
-                        key={index}
+                        key={appointment.appointmentId}
                         className="transition-colors hover:bg-gray-50"
                       >
                         <td className="py-4 font-medium text-gray-800">
-                          {appointment?.clientName || 'N/A'}
+                          {getPetName(appointment.petId)}
                         </td>
                         <td className="py-4 text-gray-600">
-                          {appointment?.petName || 'N/A'}
-                        </td>
-                        <td className="py-4 text-gray-600">
-                          {appointment?.service || 'N/A'}
+                          {appointment.appointmentDate
+                            ? new Date(
+                                appointment.appointmentDate,
+                              ).toLocaleDateString('pt-BR')
+                            : '--/--/----'}
                         </td>
                         <td className="py-4">
-                          <div className="text-sm">
-                            <div className="font-medium text-gray-800">
-                              {appointment?.appointmentDate
-                                ? new Date(
-                                    appointment.appointmentDate,
-                                  ).toLocaleDateString('pt-BR')
-                                : '--/--/----'}
-                            </div>
-                            <div className="text-gray-500">
-                              {appointment?.time || '--:--'}
-                            </div>
+                          <div className="flex flex-wrap gap-1">
+                            {appointment.services?.length > 0 ? (
+                              appointment.services
+                                .slice(0, 2)
+                                .map((service, index) => (
+                                  <span
+                                    key={index}
+                                    className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800"
+                                  >
+                                    {service.name}
+                                  </span>
+                                ))
+                            ) : (
+                              <span className="text-sm text-gray-500">
+                                Nenhum serviço
+                              </span>
+                            )}
+                            {appointment.services?.length > 2 && (
+                              <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                                +{appointment.services.length - 2}
+                              </span>
+                            )}
                           </div>
                         </td>
-                        <td className="py-4">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(appointment?.status || '')}`}
-                          >
-                            {getStatusText(appointment?.status || '')}
+                        <td className="py-4 text-right">
+                          <span className="font-semibold text-emerald-600">
+                            R$ {appointment.totalPrice.toFixed(2)}
                           </span>
                         </td>
                       </tr>
@@ -389,27 +379,49 @@ export default function Home() {
               </div>
 
               <div className="space-y-3 md:hidden">
-                {safeAppointments.slice(0, 4).map((appointment, index) => (
+                {safeAppointments.slice(0, 10).map((appointment) => (
                   <div
-                    key={index}
-                    className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-4"
+                    key={appointment.appointmentId}
+                    className="rounded-lg border border-gray-100 bg-gray-50 p-4"
                   >
-                    <div className="min-w-0 flex-1">
-                      <h4 className="truncate font-medium text-gray-800">
-                        {appointment?.clientName || 'N/A'}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        Pet:{' '}
-                        <span className="font-medium">
-                          {appointment?.petName || 'N/A'}
+                    <div className="mb-3 flex items-center justify-between">
+                      <div>
+                        <h4 className="truncate font-medium text-gray-800">
+                          {getPetName(appointment.petId)}
+                        </h4>
+                        <span className="text-sm text-gray-500">
+                          {appointment.appointmentDate
+                            ? new Date(
+                                appointment.appointmentDate,
+                              ).toLocaleDateString('pt-BR')
+                            : '--/--/----'}
                         </span>
-                      </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-semibold text-emerald-600">
+                          R$ {appointment.totalPrice.toFixed(2)}
+                        </span>
+                      </div>
                     </div>
-                    <span
-                      className={`ml-2 inline-flex flex-shrink-0 items-center rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(appointment?.status || '')}`}
-                    >
-                      {getStatusText(appointment?.status || '')}
-                    </span>
+                    {appointment.services?.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {appointment.services
+                          .slice(0, 3)
+                          .map((service, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800"
+                            >
+                              {service.name}
+                            </span>
+                          ))}
+                        {appointment.services.length > 3 && (
+                          <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                            +{appointment.services.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -531,7 +543,7 @@ export default function Home() {
                 <div className="mb-3 flex items-center justify-between">
                   <h4 className="font-medium text-gray-800">{service.name}</h4>
                   <span className="text-sm font-medium text-orange-600">
-                    R$ {service.price.toFixed(2)}
+                    R$ {service.price ? service.price.toFixed(2) : '0.00'}
                   </span>
                 </div>
                 <p className="mb-3 text-sm text-gray-600">

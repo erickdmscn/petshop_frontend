@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { XCircle } from 'lucide-react'
+import { XCircle, Check, Loader2 } from 'lucide-react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -11,8 +11,12 @@ import {
   PaymentStatus,
   PaymentMethod,
 } from '../schemas/appointmentSchema'
-import { createAppointmentAction } from '@/actions/appointments'
+import {
+  createAppointmentOnlyAction,
+  addServicesOnlyAction,
+} from '@/actions/appointments'
 import { getPetsByUserAction } from '@/actions/pets'
+import { getAllServicesAction } from '@/actions/services'
 import InputForm from './InputForm'
 
 interface Pet {
@@ -27,6 +31,15 @@ interface Pet {
   needAttention: boolean
 }
 
+interface Service {
+  serviceId: number
+  name: string
+  description: string | null
+  price: number
+  duration: number
+  isActive?: boolean
+}
+
 interface CreateAppointmentProps {
   isOpen: boolean
   onClose: () => void
@@ -34,35 +47,44 @@ interface CreateAppointmentProps {
   onSuccess?: () => void
 }
 
+type ModalState = 'creating' | 'success' | 'services'
+
 export default function CreateAppointment({
   isOpen,
   onClose,
   userId,
   onSuccess,
 }: CreateAppointmentProps) {
-  const [isLoading, setIsLoading] = useState(false)
+  const [modalState, setModalState] = useState<ModalState>('creating')
+  const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pets, setPets] = useState<Pet[]>([])
   const [loadingPets, setLoadingPets] = useState(true)
+  const [services, setServices] = useState<Service[]>([])
+  const [loadingServices, setLoadingServices] = useState(false)
+  const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([])
+  const [createdAppointmentId, setCreatedAppointmentId] = useState<
+    number | null
+  >(null)
 
   const methods = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
       userId: userId,
-      petId: 0, // Será selecionado pelo usuário
+      petId: 0,
       appointmentDate: '',
-      statusAppointments: StatusAppointments.AGENDADO,
+      statusAppointments: StatusAppointments.SCHEDULED,
       totalPrice: 0,
-      paymentStatus: PaymentStatus.PENDENTE,
-      paymentMethod: PaymentMethod.DINHEIRO,
+      paymentStatus: PaymentStatus.PENDING,
+      paymentMethod: PaymentMethod.CASH,
       notes: '',
     },
   })
 
-  // Carregar pets do usuário
+  // Carregar pets quando modal abre
   useEffect(() => {
     const loadPets = async () => {
-      if (!userId) return
+      if (!userId || !isOpen) return
 
       setLoadingPets(true)
       try {
@@ -70,6 +92,7 @@ export default function CreateAppointment({
         setPets(petsData || [])
       } catch (err) {
         console.error('Erro ao carregar pets:', err)
+        setPets([])
       } finally {
         setLoadingPets(false)
       }
@@ -77,11 +100,31 @@ export default function CreateAppointment({
 
     if (isOpen) {
       loadPets()
+      // Reset states when modal opens
+      setModalState('creating')
+      setIsProcessing(false)
+      setError(null)
+      setSelectedServiceIds([])
+      setCreatedAppointmentId(null)
     }
   }, [userId, isOpen])
 
+  // Carregar serviços quando necessário
+  const loadServices = async () => {
+    setLoadingServices(true)
+    try {
+      const servicesResponse = await getAllServicesAction(1, 50)
+      setServices(servicesResponse?.data || [])
+    } catch (err) {
+      console.error('Erro ao carregar serviços:', err)
+    } finally {
+      setLoadingServices(false)
+    }
+  }
+
+  // Criar agendamento (sem serviços)
   const onSubmit = async (data: AppointmentFormData) => {
-    setIsLoading(true)
+    setIsProcessing(true)
     setError(null)
 
     try {
@@ -95,23 +138,84 @@ export default function CreateAppointment({
       formData.append('paymentMethod', data.paymentMethod.toString())
       formData.append('notes', data.notes || '')
 
-      const result = await createAppointmentAction(formData)
+      const result = await createAppointmentOnlyAction(formData)
 
       if (result.error) {
         setError(result.error)
-      } else {
-        // Sucesso - resetar form e fechar modal
-        methods.reset()
-        if (onSuccess) {
-          onSuccess()
-        }
-        onClose()
+        setIsProcessing(false)
+        return
       }
+
+      const appointmentId = result.data?.appointmentId
+      if (!appointmentId) {
+        setError('Erro: ID do agendamento não foi retornado')
+        setIsProcessing(false)
+        return
+      }
+
+      // Sucesso! Limpar form e mostrar tela de sucesso
+      setCreatedAppointmentId(appointmentId)
+      methods.reset()
+      setModalState('success')
+      setIsProcessing(false)
     } catch (err) {
       console.error('Erro ao criar agendamento:', err)
       setError('Erro interno do servidor')
-    } finally {
-      setIsLoading(false)
+      setIsProcessing(false)
+    }
+  }
+
+  // Associar serviços ao agendamento
+  const handleAssociateServices = async () => {
+    if (!createdAppointmentId || selectedServiceIds.length === 0) {
+      setError('Selecione pelo menos um serviço')
+      return
+    }
+
+    setIsProcessing(true)
+    setError(null)
+
+    try {
+      const result = await addServicesOnlyAction(
+        createdAppointmentId,
+        selectedServiceIds,
+      )
+
+      if (result.error) {
+        setError(result.error)
+        setIsProcessing(false)
+        return
+      }
+
+      // Sucesso! Fechar modal
+      if (onSuccess) {
+        onSuccess()
+      }
+      onClose()
+    } catch (err) {
+      console.error('Erro ao associar serviços:', err)
+      setError('Erro interno do servidor')
+      setIsProcessing(false)
+    }
+  }
+
+  // Mostrar serviços para associação
+  const handleShowServices = async () => {
+    setModalState('services')
+    await loadServices()
+  }
+
+  // Finalizar sem associar serviços
+  const handleFinishWithoutServices = () => {
+    if (onSuccess) {
+      onSuccess()
+    }
+    onClose()
+  }
+
+  const handleClose = () => {
+    if (!isProcessing) {
+      onClose()
     }
   }
 
@@ -120,174 +224,312 @@ export default function CreateAppointment({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-4 md:p-8">
-        <div className="mb-4 flex items-center justify-between md:mb-6">
-          <h3 className="text-lg font-bold text-gray-800 md:text-xl">
-            Novo Agendamento
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <XCircle className="h-5 w-5 md:h-6 md:w-6" />
-          </button>
-        </div>
+        
+        {/* TELA 1: Formulário de Criação */}
+        {modalState === 'creating' && (
+          <>
+            <div className="mb-4 flex items-center justify-between md:mb-6">
+              <h3 className="text-lg font-bold text-gray-800 md:text-xl">
+                Novo Agendamento
+              </h3>
+              <button
+                onClick={handleClose}
+                disabled={isProcessing}
+                className="text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <XCircle className="h-5 w-5 md:h-6 md:w-6" />
+              </button>
+            </div>
 
-        {error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
-            <p className="text-sm text-red-600">{error}</p>
-          </div>
+            {error && (
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <FormProvider {...methods}>
+              <form
+                onSubmit={methods.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label htmlFor="petId" className="block text-gray-700">
+                      Pet <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="petId"
+                      {...methods.register('petId')}
+                      className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+                      disabled={loadingPets}
+                    >
+                      <option value="">
+                        {loadingPets ? 'Carregando pets...' : 'Selecione um pet'}
+                      </option>
+                      {pets.map((pet) => (
+                        <option key={pet.petsId} value={pet.petsId}>
+                          {pet.fullName} - {pet.breed}
+                        </option>
+                      ))}
+                    </select>
+                    {methods.formState.errors.petId && (
+                      <p className="text-sm text-red-500">
+                        {methods.formState.errors.petId.message}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <InputForm
+                    label="Data do Agendamento"
+                    name="appointmentDate"
+                    type="date"
+                    placeholder=""
+                  />
+
+                  <div className="space-y-2">
+                    <label htmlFor="statusAppointments" className="block text-gray-700">
+                      Status do Agendamento <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="statusAppointments"
+                      {...methods.register('statusAppointments')}
+                      className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+                    >
+                      <option value={StatusAppointments.SCHEDULED}>Agendado</option>
+                      <option value={StatusAppointments.IN_PROGRESS}>Em Andamento</option>
+                      <option value={StatusAppointments.COMPLETED}>Concluído</option>
+                      <option value={StatusAppointments.CANCELED}>Cancelado</option>
+                    </select>
+                    {methods.formState.errors.statusAppointments && (
+                      <p className="text-sm text-red-500">
+                        {methods.formState.errors.statusAppointments.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <InputForm
+                    label="Preço Total (R$)"
+                    name="totalPrice"
+                    type="number"
+                    placeholder="0.00"
+                  />
+
+                  <div className="space-y-2">
+                    <label htmlFor="paymentStatus" className="block text-gray-700">
+                      Status do Pagamento <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="paymentStatus"
+                      {...methods.register('paymentStatus')}
+                      className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+                    >
+                      <option value={PaymentStatus.PENDING}>Pendente</option>
+                      <option value={PaymentStatus.PAID}>Pago</option>
+                      <option value={PaymentStatus.CANCELED}>Cancelado</option>
+                    </select>
+                    {methods.formState.errors.paymentStatus && (
+                      <p className="text-sm text-red-500">
+                        {methods.formState.errors.paymentStatus.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="paymentMethod" className="block text-gray-700">
+                      Método de Pagamento <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="paymentMethod"
+                      {...methods.register('paymentMethod')}
+                      className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+                    >
+                      <option value={PaymentMethod.NONE}>Nenhum</option>
+                      <option value={PaymentMethod.CASH}>Dinheiro</option>
+                      <option value={PaymentMethod.DEBIT_CARD}>Cartão de Débito</option>
+                      <option value={PaymentMethod.CREDIT_CARD}>Cartão de Crédito</option>
+                      <option value={PaymentMethod.PIX}>PIX</option>
+                    </select>
+                    {methods.formState.errors.paymentMethod && (
+                      <p className="text-sm text-red-500">
+                        {methods.formState.errors.paymentMethod.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Observações
+                  </label>
+                  <textarea
+                    {...methods.register('notes')}
+                    className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+                    rows={3}
+                    placeholder="Informações adicionais sobre o agendamento..."
+                  />
+                  {methods.formState.errors.notes && (
+                    <p className="text-sm text-red-500">
+                      {methods.formState.errors.notes.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400 md:py-3 md:text-base"
+                  >
+                    {isProcessing ? 'Criando...' : 'Criar Agendamento'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    disabled={isProcessing}
+                    className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 md:py-3 md:text-base"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </FormProvider>
+          </>
         )}
 
-        <FormProvider {...methods}>
-          <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label htmlFor="petId" className="block text-gray-700">
-                  Pet <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="petId"
-                  {...methods.register('petId')}
-                  className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
-                  disabled={loadingPets}
-                >
-                  <option value="">
-                    {loadingPets ? 'Carregando pets...' : 'Selecione um pet'}
-                  </option>
-                  {pets.map((pet) => (
-                    <option key={pet.petsId} value={pet.petsId}>
-                      {pet.fullName} - {pet.breed}
-                    </option>
-                  ))}
-                </select>
-                {methods.formState.errors.petId && (
-                  <p className="text-sm text-red-500">
-                    {methods.formState.errors.petId.message}
-                  </p>
-                )}
+        {/* TELA 2: Sucesso - Pergunta sobre Serviços */}
+        {modalState === 'success' && (
+          <>
+            <div className="mb-6 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                <Check className="h-8 w-8 text-green-600" />
               </div>
-              <InputForm
-                label="Data do Agendamento"
-                name="appointmentDate"
-                type="datetime-local"
-                placeholder=""
-              />
-              <div className="space-y-2">
-                <label
-                  htmlFor="statusAppointments"
-                  className="block text-gray-700"
-                >
-                  Status do Agendamento <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="statusAppointments"
-                  {...methods.register('statusAppointments')}
-                  className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
-                >
-                  <option value={StatusAppointments.AGENDADO}>Agendado</option>
-                  <option value={StatusAppointments.EM_ANDAMENTO}>
-                    Em Andamento
-                  </option>
-                  <option value={StatusAppointments.CONCLUIDO}>
-                    Concluído
-                  </option>
-                  <option value={StatusAppointments.CANCELADO}>
-                    Cancelado
-                  </option>
-                </select>
-                {methods.formState.errors.statusAppointments && (
-                  <p className="text-sm text-red-500">
-                    {methods.formState.errors.statusAppointments.message}
-                  </p>
-                )}
-              </div>
-              <InputForm
-                label="Preço Total (R$)"
-                name="totalPrice"
-                type="number"
-                placeholder="0.00"
-              />
-              <div className="space-y-2">
-                <label htmlFor="paymentStatus" className="block text-gray-700">
-                  Status do Pagamento <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="paymentStatus"
-                  {...methods.register('paymentStatus')}
-                  className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
-                >
-                  <option value={PaymentStatus.PENDENTE}>Pendente</option>
-                  <option value={PaymentStatus.PAGO}>Pago</option>
-                  <option value={PaymentStatus.CANCELADO}>Cancelado</option>
-                  <option value={PaymentStatus.REEMBOLSADO}>Reembolsado</option>
-                </select>
-                {methods.formState.errors.paymentStatus && (
-                  <p className="text-sm text-red-500">
-                    {methods.formState.errors.paymentStatus.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="paymentMethod" className="block text-gray-700">
-                  Método de Pagamento <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="paymentMethod"
-                  {...methods.register('paymentMethod')}
-                  className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
-                >
-                  <option value={PaymentMethod.DINHEIRO}>Dinheiro</option>
-                  <option value={PaymentMethod.DEBITO}>Cartão de Débito</option>
-                  <option value={PaymentMethod.CREDITO}>
-                    Cartão de Crédito
-                  </option>
-                  <option value={PaymentMethod.PIX}>PIX</option>
-                  <option value={PaymentMethod.TRANSFERENCIA}>
-                    Transferência Bancária
-                  </option>
-                </select>
-                {methods.formState.errors.paymentMethod && (
-                  <p className="text-sm text-red-500">
-                    {methods.formState.errors.paymentMethod.message}
-                  </p>
-                )}
-              </div>
+              <h3 className="mb-2 text-xl font-bold text-gray-800">
+                Agendamento criado com sucesso!
+              </h3>
+              <p className="text-gray-600">
+                Deseja associá-lo a serviço(s)?
+              </p>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Observações
-              </label>
-              <textarea
-                {...methods.register('notes')}
-                className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
-                rows={3}
-                placeholder="Informações adicionais sobre o agendamento..."
-              />
-              {methods.formState.errors.notes && (
-                <p className="text-sm text-red-500">
-                  {methods.formState.errors.notes.message}
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleShowServices}
+                className="flex-1 rounded-lg bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 md:text-base"
+              >
+                Sim, associar serviços
+              </button>
+              <button
+                onClick={handleFinishWithoutServices}
+                className="flex-1 rounded-lg border border-gray-300 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 md:text-base"
+              >
+                Não, finalizar
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* TELA 3: Seleção de Serviços */}
+        {modalState === 'services' && (
+          <>
+            <div className="mb-4 flex items-center justify-between md:mb-6">
+              <h3 className="text-lg font-bold text-gray-800 md:text-xl">
+                Associar Serviços
+              </h3>
+              <button
+                onClick={handleClose}
+                disabled={isProcessing}
+                className="text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <XCircle className="h-5 w-5 md:h-6 md:w-6" />
+              </button>
+            </div>
+
+            {error && (
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <div className="mb-6">
+              <p className="mb-4 text-sm text-gray-600">
+                Selecione os serviços que deseja associar ao agendamento:
+              </p>
+
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
+                {loadingServices ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                    <span className="ml-2 text-sm text-gray-500">Carregando serviços...</span>
+                  </div>
+                ) : services.length === 0 ? (
+                  <p className="text-center text-sm text-gray-500">
+                    Nenhum serviço disponível
+                  </p>
+                ) : (
+                  <div className="max-h-60 space-y-3 overflow-y-auto">
+                    {services.map((service) => (
+                      <label
+                        key={service.serviceId}
+                        className="flex cursor-pointer items-start gap-3 rounded-lg bg-white p-3 transition-colors hover:bg-gray-50"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedServiceIds.includes(service.serviceId)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedServiceIds([...selectedServiceIds, service.serviceId])
+                            } else {
+                              setSelectedServiceIds(
+                                selectedServiceIds.filter((id) => id !== service.serviceId)
+                              )
+                            }
+                          }}
+                          className="mt-1 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-gray-800">
+                              {service.name}
+                            </span>
+                            <span className="font-medium text-emerald-600">
+                              R$ {service.price?.toFixed(2) || '0.00'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            {service.description || 'Sem descrição'} • {service.duration || 0} min
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {selectedServiceIds.length > 0 && (
+                <p className="mt-2 text-sm text-emerald-600">
+                  {selectedServiceIds.length} serviço{selectedServiceIds.length > 1 ? 's' : ''} selecionado{selectedServiceIds.length > 1 ? 's' : ''}
                 </p>
               )}
             </div>
+
             <div className="flex gap-3">
               <button
-                type="submit"
-                disabled={isLoading}
-                className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400 md:py-3 md:text-base"
+                onClick={handleAssociateServices}
+                disabled={isProcessing || selectedServiceIds.length === 0}
+                className="flex-1 rounded-lg bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400 md:text-base"
               >
-                {isLoading ? 'Criando...' : 'Criar Agendamento'}
+                {isProcessing ? 'Associando...' : 'Associar Serviços'}
               </button>
               <button
-                type="button"
-                onClick={onClose}
-                disabled={isLoading}
-                className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 md:py-3 md:text-base"
+                onClick={handleFinishWithoutServices}
+                disabled={isProcessing}
+                className="flex-1 rounded-lg border border-gray-300 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 md:text-base"
               >
-                Cancelar
+                Pular
               </button>
             </div>
-          </form>
-        </FormProvider>
+          </>
+        )}
       </div>
     </div>
   )

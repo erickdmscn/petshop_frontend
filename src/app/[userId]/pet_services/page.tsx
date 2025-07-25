@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Plus } from 'lucide-react'
 import { getAllServicesAction } from '@/actions/services'
+import CreateService from '../../components/CreateService'
 
 interface Service {
   serviceId: number
@@ -26,25 +28,26 @@ export default function PetServicesPage() {
     null,
   )
   const [loading, setLoading] = useState(true)
+  const [showCreateService, setShowCreateService] = useState(false)
 
   // Garantir que sempre seja um array válido
   const safeServices = servicesData?.data || services || []
 
-  useEffect(() => {
-    const loadServices = async () => {
-      setLoading(true)
+  const loadServices = async () => {
+    setLoading(true)
 
-      try {
-        const servicesResponse = await getAllServicesAction(1, 50)
-        setServicesData(servicesResponse)
-        setServices(servicesResponse?.data || [])
-      } catch (err) {
-        console.error('Erro ao carregar serviços:', err)
-      } finally {
-        setLoading(false)
-      }
+    try {
+      const servicesResponse = await getAllServicesAction(1, 50)
+      setServicesData(servicesResponse)
+      setServices(servicesResponse?.data || [])
+    } catch (err) {
+      console.error('Erro ao carregar serviços:', err)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     loadServices()
   }, [])
 
@@ -70,6 +73,13 @@ export default function PetServicesPage() {
             Gerencie os serviços oferecidos pelo seu petshop
           </p>
         </div>
+        <button
+          onClick={() => setShowCreateService(true)}
+          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 md:px-6 md:py-3 md:text-base"
+        >
+          <Plus className="h-4 w-4 md:h-5 md:w-5" />
+          Novo Serviço
+        </button>
       </div>
 
       <div className="space-y-4">
@@ -149,9 +159,9 @@ export default function PetServicesPage() {
                 </div>
                 <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800 md:gap-2 md:px-4 md:py-2 md:text-base">
                   <span className="hidden md:inline">
-                    {service.duration} min
+                    {service.duration || 0} min
                   </span>
-                  <span className="md:hidden">{service.duration}m</span>
+                  <span className="md:hidden">{service.duration || 0}m</span>
                 </span>
               </div>
 
@@ -176,7 +186,9 @@ export default function PetServicesPage() {
                     <p className="text-xs font-medium text-gray-500 md:text-sm">
                       Duração
                     </p>
-                    <p className="font-semibold">{service.duration} minutos</p>
+                    <p className="font-semibold">
+                      {service.duration || 0} minutos
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-gray-700 md:text-base">
@@ -188,7 +200,7 @@ export default function PetServicesPage() {
                       Preço
                     </p>
                     <p className="font-semibold">
-                      R$ {service.price.toFixed(2)}
+                      R$ {service.price ? service.price.toFixed(2) : '0.00'}
                     </p>
                   </div>
                 </div>
@@ -222,6 +234,14 @@ export default function PetServicesPage() {
           ))
         )}
       </div>
+
+      {showCreateService && (
+        <CreateService
+          isOpen={showCreateService}
+          onClose={() => setShowCreateService(false)}
+          onSuccess={loadServices}
+        />
+      )}
     </>
   )
 }

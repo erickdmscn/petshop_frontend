@@ -1,25 +1,24 @@
 import { z } from 'zod'
 
 export enum StatusAppointments {
-  AGENDADO = 1,
-  EM_ANDAMENTO = 2,
-  CONCLUIDO = 3,
-  CANCELADO = 4,
+  SCHEDULED = 1,
+  IN_PROGRESS = 2,
+  COMPLETED = 3,
+  CANCELED = 4,
 }
 
 export enum PaymentStatus {
-  PENDENTE = 1,
-  PAGO = 2,
-  CANCELADO = 3,
-  REEMBOLSADO = 4,
+  PENDING = 1,
+  PAID = 2,
+  CANCELED = 3,
 }
 
 export enum PaymentMethod {
-  DINHEIRO = 1,
-  DEBITO = 2,
-  CREDITO = 3,
-  PIX = 4,
-  TRANSFERENCIA = 5,
+  NONE = 1,
+  CASH = 2,
+  CREDIT_CARD = 3,
+  DEBIT_CARD = 4,
+  PIX = 5,
 }
 
 export const appointmentSchema = z.object({
@@ -28,7 +27,7 @@ export const appointmentSchema = z.object({
   appointmentDate: z.string().min(1, 'Data obrigatória'),
   statusAppointments: z.coerce.number().min(1).max(4),
   totalPrice: z.coerce.number().min(0, 'Preço deve ser positivo'),
-  paymentStatus: z.coerce.number().min(1).max(4),
+  paymentStatus: z.coerce.number().min(1).max(3),
   paymentMethod: z.coerce.number().min(1).max(5),
   notes: z.string().optional(),
 })

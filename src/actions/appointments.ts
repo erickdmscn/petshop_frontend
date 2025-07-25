@@ -9,7 +9,7 @@ interface ActionResult {
   data?: any
 }
 
-export async function createAppointmentAction(
+export async function createAppointmentOnlyAction(
   formData: FormData,
 ): Promise<ActionResult> {
   try {
@@ -45,27 +45,124 @@ export async function createAppointmentAction(
       return { error: errorData.message || 'Erro ao criar agendamento' }
     }
 
-    // Verificar se há conteúdo para parsear
-    let data = null
-    const contentType = response.headers.get('content-type')
+    // Extrair appointmentId da resposta
+    let appointmentId = null
+    try {
+      const data = await response.json()
+      appointmentId = data.appointmentId || data.id
+    } catch (error) {
+      console.error(
+        'Erro ao processar resposta da criação de agendamento:',
+        error,
+      )
 
-    if (contentType && contentType.includes('application/json')) {
-      const text = await response.text()
-      if (text) {
-        try {
-          data = JSON.parse(text)
-        } catch {
-          console.warn('Resposta não é JSON válido:', text)
+      // Fallback: tentar extrair do header Location se JSON falhar
+      const locationHeader = response.headers.get('location')
+      if (locationHeader) {
+        const idMatch = locationHeader.match(/\/(\d+)$/)
+        if (idMatch) {
+          appointmentId = parseInt(idMatch[1])
         }
       }
     }
 
+    if (!appointmentId) {
+      return { error: 'Agendamento criado mas ID não foi retornado pela API' }
+    }
+
     revalidatePath('/appointments')
 
-    return { success: true, data }
+    return {
+      success: true,
+      data: { appointmentId },
+    }
   } catch (error) {
     console.error('Erro ao criar agendamento:', error)
     return { error: 'Erro interno do servidor' }
+  }
+}
+
+export async function addServicesOnlyAction(
+  appointmentId: number,
+  serviceIds: number[],
+): Promise<ActionResult> {
+  try {
+    if (!appointmentId) {
+      return { error: 'ID do agendamento é obrigatório' }
+    }
+
+    if (!Array.isArray(serviceIds) || serviceIds.length === 0) {
+      return { error: 'Pelo menos um serviço deve ser selecionado' }
+    }
+
+    // Verificar se o agendamento existe antes de associar serviços
+    try {
+      await getAppointmentByIdAction(appointmentId)
+    } catch {
+      return { error: `Agendamento ${appointmentId} não encontrado` }
+    }
+
+    const endpoint = `/v1/appointment/AddServicesAppointments?aptId=${appointmentId}`
+
+    const response = await authenticatedFetch(endpoint, {
+      method: 'PATCH',
+      body: JSON.stringify(serviceIds), // Enviar array direto
+    })
+
+    if (!response.ok) {
+      let errorData: { message?: string } = {}
+      try {
+        errorData = await response.json()
+      } catch {
+        // Ignorar erro de parsing
+      }
+
+      return {
+        error:
+          errorData.message || `Erro ${response.status} ao associar serviços`,
+      }
+    }
+
+    // Se a API retornou sucesso, confiar nela sem verificação adicional
+    revalidatePath('/appointments')
+    revalidatePath(`/appointments/${appointmentId}`)
+
+    return {
+      success: true,
+      data: {
+        appointmentId,
+        serviceIds,
+        message: 'Serviços associados com sucesso!',
+      },
+    }
+  } catch (error) {
+    console.error('Erro ao associar serviços:', error)
+    return { error: 'Erro interno do servidor' }
+  }
+}
+
+// Manter a action original para compatibilidade, mas simplificada
+export async function createAppointmentAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  // Usar a nova action separada
+  return await createAppointmentOnlyAction(formData)
+}
+
+// Simplificar a action de adicionar serviços
+export async function addServicesAppointmentAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  try {
+    const appointmentId = Number(formData.get('appointmentId'))
+    const serviceIds = JSON.parse(
+      (formData.get('serviceIds') as string) || '[]',
+    )
+
+    return await addServicesOnlyAction(appointmentId, serviceIds)
+  } catch (error) {
+    console.error('❌ Erro ao processar FormData:', error)
+    return { error: 'Erro ao processar dados do formulário' }
   }
 }
 
@@ -119,8 +216,6 @@ export async function getAppointmentServicesAction(
     }
 
     const result = await response.json()
-    console.log('result', result)
-    // Se a API retornar apenas um array, mantemos compatibilidade
     if (Array.isArray(result)) {
       return {
         data: result,
@@ -188,7 +283,20 @@ export async function getAppointmentsByUserAction(userId: number) {
       return []
     }
 
-    return await response.json()
+    const result = await response.json()
+
+    // Se a API retornar um objeto com items, extrair apenas os items
+    if (result && result.items && Array.isArray(result.items)) {
+      return result.items
+    }
+
+    // Se for um array direto, retornar como está
+    if (Array.isArray(result)) {
+      return result
+    }
+
+    // Caso contrário, retornar array vazio
+    return []
   } catch (error) {
     console.error('Erro ao buscar agendamentos:', error)
     return []
@@ -228,38 +336,5 @@ export async function getAppointmentsByStatusAction(status?: string) {
   } catch (error) {
     console.error('Erro ao buscar agendamentos por status:', error)
     throw new Error('Erro ao buscar agendamentos por status')
-  }
-}
-
-export async function addServicesAppointmentAction(
-  formData: FormData,
-): Promise<ActionResult> {
-  try {
-    const serviceData = {
-      appointmentId: Number(formData.get('appointmentId')),
-      serviceIds: JSON.parse((formData.get('serviceIds') as string) || '[]'),
-    }
-
-    const response = await authenticatedFetch(
-      '/v1/appointment/AddServicesAppointments',
-      {
-        method: 'PATCH',
-        body: JSON.stringify(serviceData),
-      },
-    )
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      return { error: errorData.message || 'Erro ao adicionar serviços' }
-    }
-
-    const data = await response.json()
-    revalidatePath('/appointments')
-    revalidatePath(`/appointments/${serviceData.appointmentId}`)
-
-    return { success: true, data }
-  } catch (error) {
-    console.error('Erro ao adicionar serviços:', error)
-    return { error: 'Erro interno do servidor' }
   }
 }
