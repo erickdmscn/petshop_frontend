@@ -48,11 +48,11 @@ export async function createPetAction(petData: {
     if (!response.ok) {
       const errorText = await response.text()
 
-      let errorData = {}
+      let errorData: { message?: string } = {}
       try {
         errorData = JSON.parse(errorText)
       } catch (e) {
-        console.error('Erro ao criar pet:', e)
+        console.error('Erro ao processar resposta da API:', e)
       }
 
       return {
@@ -60,7 +60,6 @@ export async function createPetAction(petData: {
       }
     }
 
-    // Verificar se a resposta tem conteúdo
     const responseText = await response.text()
 
     let data = null
@@ -68,7 +67,7 @@ export async function createPetAction(petData: {
       try {
         data = JSON.parse(responseText)
       } catch (e) {
-        // Se não for JSON mas a requisição foi bem-sucedida, consideramos sucesso
+        console.error('Erro ao processar resposta da API:', e)
       }
     }
 
@@ -177,6 +176,9 @@ export async function getPetsByUserAction(
     return Array.isArray(data) ? data : []
   } catch (error) {
     console.error('Erro ao buscar pets do usuário:', error)
+    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+      throw error // Re-throw para que o componente possa lidar com isso
+    }
     return []
   }
 }

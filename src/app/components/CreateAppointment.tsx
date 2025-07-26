@@ -70,7 +70,7 @@ export default function CreateAppointment({
   const methods = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
-      userId: userId,
+      userId,
       petId: 0,
       appointmentDate: '',
       statusAppointments: StatusAppointments.SCHEDULED,
@@ -81,7 +81,6 @@ export default function CreateAppointment({
     },
   })
 
-  // Carregar pets quando modal abre
   useEffect(() => {
     const loadPets = async () => {
       if (!userId || !isOpen) return
@@ -100,7 +99,6 @@ export default function CreateAppointment({
 
     if (isOpen) {
       loadPets()
-      // Reset states when modal opens
       setModalState('creating')
       setIsProcessing(false)
       setError(null)
@@ -109,7 +107,6 @@ export default function CreateAppointment({
     }
   }, [userId, isOpen])
 
-  // Carregar serviços quando necessário
   const loadServices = async () => {
     setLoadingServices(true)
     try {
@@ -122,7 +119,6 @@ export default function CreateAppointment({
     }
   }
 
-  // Criar agendamento (sem serviços)
   const onSubmit = async (data: AppointmentFormData) => {
     setIsProcessing(true)
     setError(null)
@@ -153,7 +149,6 @@ export default function CreateAppointment({
         return
       }
 
-      // Sucesso! Limpar form e mostrar tela de sucesso
       setCreatedAppointmentId(appointmentId)
       methods.reset()
       setModalState('success')
@@ -165,7 +160,6 @@ export default function CreateAppointment({
     }
   }
 
-  // Associar serviços ao agendamento
   const handleAssociateServices = async () => {
     if (!createdAppointmentId || selectedServiceIds.length === 0) {
       setError('Selecione pelo menos um serviço')
@@ -187,7 +181,6 @@ export default function CreateAppointment({
         return
       }
 
-      // Sucesso! Fechar modal
       if (onSuccess) {
         onSuccess()
       }
@@ -199,13 +192,11 @@ export default function CreateAppointment({
     }
   }
 
-  // Mostrar serviços para associação
   const handleShowServices = async () => {
     setModalState('services')
     await loadServices()
   }
 
-  // Finalizar sem associar serviços
   const handleFinishWithoutServices = () => {
     if (onSuccess) {
       onSuccess()
@@ -224,8 +215,6 @@ export default function CreateAppointment({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-4 md:p-8">
-        
-        {/* TELA 1: Formulário de Criação */}
         {modalState === 'creating' && (
           <>
             <div className="mb-4 flex items-center justify-between md:mb-6">
@@ -264,7 +253,9 @@ export default function CreateAppointment({
                       disabled={loadingPets}
                     >
                       <option value="">
-                        {loadingPets ? 'Carregando pets...' : 'Selecione um pet'}
+                        {loadingPets
+                          ? 'Carregando pets...'
+                          : 'Selecione um pet'}
                       </option>
                       {pets.map((pet) => (
                         <option key={pet.petsId} value={pet.petsId}>
@@ -278,7 +269,7 @@ export default function CreateAppointment({
                       </p>
                     )}
                   </div>
-                  
+
                   <InputForm
                     label="Data do Agendamento"
                     name="appointmentDate"
@@ -287,18 +278,30 @@ export default function CreateAppointment({
                   />
 
                   <div className="space-y-2">
-                    <label htmlFor="statusAppointments" className="block text-gray-700">
-                      Status do Agendamento <span className="text-red-500">*</span>
+                    <label
+                      htmlFor="statusAppointments"
+                      className="block text-gray-700"
+                    >
+                      Status do Agendamento{' '}
+                      <span className="text-red-500">*</span>
                     </label>
                     <select
                       id="statusAppointments"
                       {...methods.register('statusAppointments')}
                       className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
                     >
-                      <option value={StatusAppointments.SCHEDULED}>Agendado</option>
-                      <option value={StatusAppointments.IN_PROGRESS}>Em Andamento</option>
-                      <option value={StatusAppointments.COMPLETED}>Concluído</option>
-                      <option value={StatusAppointments.CANCELED}>Cancelado</option>
+                      <option value={StatusAppointments.SCHEDULED}>
+                        Agendado
+                      </option>
+                      <option value={StatusAppointments.IN_PROGRESS}>
+                        Em Andamento
+                      </option>
+                      <option value={StatusAppointments.COMPLETED}>
+                        Concluído
+                      </option>
+                      <option value={StatusAppointments.CANCELED}>
+                        Cancelado
+                      </option>
                     </select>
                     {methods.formState.errors.statusAppointments && (
                       <p className="text-sm text-red-500">
@@ -315,8 +318,12 @@ export default function CreateAppointment({
                   />
 
                   <div className="space-y-2">
-                    <label htmlFor="paymentStatus" className="block text-gray-700">
-                      Status do Pagamento <span className="text-red-500">*</span>
+                    <label
+                      htmlFor="paymentStatus"
+                      className="block text-gray-700"
+                    >
+                      Status do Pagamento{' '}
+                      <span className="text-red-500">*</span>
                     </label>
                     <select
                       id="paymentStatus"
@@ -335,8 +342,12 @@ export default function CreateAppointment({
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="paymentMethod" className="block text-gray-700">
-                      Método de Pagamento <span className="text-red-500">*</span>
+                    <label
+                      htmlFor="paymentMethod"
+                      className="block text-gray-700"
+                    >
+                      Método de Pagamento{' '}
+                      <span className="text-red-500">*</span>
                     </label>
                     <select
                       id="paymentMethod"
@@ -345,8 +356,12 @@ export default function CreateAppointment({
                     >
                       <option value={PaymentMethod.NONE}>Nenhum</option>
                       <option value={PaymentMethod.CASH}>Dinheiro</option>
-                      <option value={PaymentMethod.DEBIT_CARD}>Cartão de Débito</option>
-                      <option value={PaymentMethod.CREDIT_CARD}>Cartão de Crédito</option>
+                      <option value={PaymentMethod.DEBIT_CARD}>
+                        Cartão de Débito
+                      </option>
+                      <option value={PaymentMethod.CREDIT_CARD}>
+                        Cartão de Crédito
+                      </option>
                       <option value={PaymentMethod.PIX}>PIX</option>
                     </select>
                     {methods.formState.errors.paymentMethod && (
@@ -396,7 +411,6 @@ export default function CreateAppointment({
           </>
         )}
 
-        {/* TELA 2: Sucesso - Pergunta sobre Serviços */}
         {modalState === 'success' && (
           <>
             <div className="mb-6 text-center">
@@ -406,9 +420,7 @@ export default function CreateAppointment({
               <h3 className="mb-2 text-xl font-bold text-gray-800">
                 Agendamento criado com sucesso!
               </h3>
-              <p className="text-gray-600">
-                Deseja associá-lo a serviço(s)?
-              </p>
+              <p className="text-gray-600">Deseja associá-lo a serviço(s)?</p>
             </div>
 
             <div className="flex gap-3">
@@ -428,7 +440,6 @@ export default function CreateAppointment({
           </>
         )}
 
-        {/* TELA 3: Seleção de Serviços */}
         {modalState === 'services' && (
           <>
             <div className="mb-4 flex items-center justify-between md:mb-6">
@@ -459,7 +470,9 @@ export default function CreateAppointment({
                 {loadingServices ? (
                   <div className="flex items-center justify-center py-4">
                     <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-                    <span className="ml-2 text-sm text-gray-500">Carregando serviços...</span>
+                    <span className="ml-2 text-sm text-gray-500">
+                      Carregando serviços...
+                    </span>
                   </div>
                 ) : services.length === 0 ? (
                   <p className="text-center text-sm text-gray-500">
@@ -474,13 +487,20 @@ export default function CreateAppointment({
                       >
                         <input
                           type="checkbox"
-                          checked={selectedServiceIds.includes(service.serviceId)}
+                          checked={selectedServiceIds.includes(
+                            service.serviceId,
+                          )}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setSelectedServiceIds([...selectedServiceIds, service.serviceId])
+                              setSelectedServiceIds([
+                                ...selectedServiceIds,
+                                service.serviceId,
+                              ])
                             } else {
                               setSelectedServiceIds(
-                                selectedServiceIds.filter((id) => id !== service.serviceId)
+                                selectedServiceIds.filter(
+                                  (id) => id !== service.serviceId,
+                                ),
                               )
                             }
                           }}
@@ -496,7 +516,8 @@ export default function CreateAppointment({
                             </span>
                           </div>
                           <p className="text-sm text-gray-600">
-                            {service.description || 'Sem descrição'} • {service.duration || 0} min
+                            {service.description || 'Sem descrição'} •{' '}
+                            {service.duration || 0} min
                           </p>
                         </div>
                       </label>
@@ -507,7 +528,9 @@ export default function CreateAppointment({
 
               {selectedServiceIds.length > 0 && (
                 <p className="mt-2 text-sm text-emerald-600">
-                  {selectedServiceIds.length} serviço{selectedServiceIds.length > 1 ? 's' : ''} selecionado{selectedServiceIds.length > 1 ? 's' : ''}
+                  {selectedServiceIds.length} serviço
+                  {selectedServiceIds.length > 1 ? 's' : ''} selecionado
+                  {selectedServiceIds.length > 1 ? 's' : ''}
                 </p>
               )}
             </div>

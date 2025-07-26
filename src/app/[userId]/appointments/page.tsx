@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Plus, Trash2 } from 'lucide-react'
 import { getAppointmentsByUserAction } from '@/actions/appointments'
@@ -85,7 +85,7 @@ export default function AppointmentsPage() {
     return pet ? pet.fullName : `Pet ${petId}`
   }
 
-  const loadAppointments = async () => {
+  const loadAppointments = useCallback(async () => {
     setLoading(true)
 
     try {
@@ -98,10 +98,15 @@ export default function AppointmentsPage() {
       setPets(petsData || [])
     } catch (err) {
       console.error('Erro ao carregar dados:', err)
+      // Se for erro de autenticação, o layout já vai redirecionar
+      if (err instanceof Error && err.message === 'UNAUTHORIZED') {
+        // Deixar o layout/middleware lidar com o redirecionamento
+        return
+      }
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId])
 
   const handleDeleteAppointment = (appointment: Appointment) => {
     setSelectedAppointmentForDelete({
@@ -119,7 +124,7 @@ export default function AppointmentsPage() {
 
   useEffect(() => {
     loadAppointments()
-  }, [userId])
+  }, [loadAppointments])
 
   if (loading) {
     return (

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const publicRoutes = ['/', '/login', '/reset_password']
+const publicRoutes = ['/', '/login', '/reset_password', '/unauthorized']
 
 export function middleware(request: NextRequest) {
   const isPublicRoute = publicRoutes.some((route) =>

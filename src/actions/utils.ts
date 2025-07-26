@@ -18,29 +18,51 @@ export async function authenticatedFetch(
   endpoint: string,
   options: RequestInit & { body?: BodyInit | any } = {},
 ) {
-  const token = await getAuthToken()
-  let body = options.body
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
-    Accept: '*/*',
-    ...(options.headers as any),
-  }
-
-  // Se tiver body e NÃO for FormData, asseguramos JSON
-  if (body && !(body instanceof FormData)) {
-    if (typeof body !== 'string') {
-      body = JSON.stringify(body)
+  try {
+    const token = await getAuthToken()
+    let body = options.body
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      Accept: '*/*',
+      ...(options.headers as any),
     }
-    headers['Content-Type'] = 'application/json'
+
+    // Se tiver body e NÃO for FormData, asseguramos JSON
+    if (body && !(body instanceof FormData)) {
+      if (typeof body !== 'string') {
+        body = JSON.stringify(body)
+      }
+      headers['Content-Type'] = 'application/json'
+    }
+
+    const url = buildApiUrl(endpoint)
+
+    const response = await fetch(url, {
+      ...options,
+      headers,
+      body,
+    })
+
+    // Se receber 401, limpar cookies e redirecionar
+    if (response.status === 401) {
+      console.log('Token expirado ou inválido, limpando sessão...')
+      const cookieStore = await cookies()
+      cookieStore.delete('auth_token')
+      cookieStore.delete('user_data')
+
+      throw new Error('UNAUTHORIZED')
+    }
+
+    return response
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message === 'Token de autenticação não encontrado'
+    ) {
+      throw new Error('UNAUTHORIZED')
+    }
+    throw error
   }
-
-  const url = buildApiUrl(endpoint)
-
-  return fetch(url, {
-    ...options,
-    headers,
-    body,
-  })
 }
 
 export async function getUserData() {

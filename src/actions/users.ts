@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { authenticatedFetch } from './utils'
+import { authenticatedFetch, getAuthToken } from './utils'
 
 interface ActionResult {
   error?: string
@@ -9,7 +9,6 @@ interface ActionResult {
   data?: any
 }
 
-// Função para limpar CPF removendo formatação
 function cleanCPF(value: string): string {
   return value.replace(/\D/g, '')
 }
@@ -100,6 +99,23 @@ export async function createUserAction(
 export async function getAllUsersAction() {
   try {
     const response = await authenticatedFetch('/v1/users')
+
+    if (!response.ok) {
+      throw new Error('Erro ao buscar usuários')
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Erro ao buscar usuários:', error)
+    throw new Error('Erro ao buscar usuários')
+  }
+}
+
+export async function getUsersAction(pageIndex = 1, pageSize = 10) {
+  try {
+    const response = await authenticatedFetch(
+      `/v1/users?pageIndex=${pageIndex}&pageSize=${pageSize}`,
+    )
 
     if (!response.ok) {
       throw new Error('Erro ao buscar usuários')
@@ -260,5 +276,67 @@ export async function updateUserWithCodeAction(
   } catch (error) {
     console.error('Erro ao atualizar usuário:', error)
     return { error: 'Erro interno do servidor' }
+  }
+}
+
+export async function updateUserTypeAction(
+  userId: number,
+): Promise<ActionResult> {
+  try {
+    const endpoint = `/updetaUserType/${userId}`
+
+    const token = await getAuthToken()
+
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api', '')
+    const url = `${baseUrl}${endpoint}`
+
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        accept: '*/*',
+      },
+    })
+
+    if (response.status === 401) {
+      const cookieStore = await import('next/headers').then((m) => m.cookies())
+      ;(await cookieStore).delete('auth_token')
+      ;(await cookieStore).delete('user_data')
+      return { error: 'Sessão expirada. Faça login novamente.' }
+    }
+
+    if (!response.ok) {
+      const responseClone = response.clone()
+      let errorData: any = {}
+      let errorText = ''
+
+      try {
+        errorData = await response.json()
+      } catch {
+        errorText = await responseClone.text().catch(() => '')
+      }
+
+      const errorMessage =
+        errorData.message ||
+        errorText ||
+        `Erro ${response.status}: ${response.statusText}`
+      return { error: errorMessage }
+    }
+
+    const contentLength = response.headers.get('content-length')
+    let responseData = null
+
+    if (contentLength && parseInt(contentLength) > 0) {
+      responseData = await response.json().catch(() => null)
+    }
+
+    revalidatePath('/admin')
+    return { success: true, data: responseData }
+  } catch (error) {
+    console.error('Erro ao atualizar tipo de usuário:', error)
+    return {
+      error: `Erro interno: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+    }
   }
 }

@@ -95,7 +95,6 @@ export async function addServicesOnlyAction(
       return { error: 'Pelo menos um serviço deve ser selecionado' }
     }
 
-    // Verificar se o agendamento existe antes de associar serviços
     try {
       await getAppointmentByIdAction(appointmentId)
     } catch {
@@ -106,7 +105,7 @@ export async function addServicesOnlyAction(
 
     const response = await authenticatedFetch(endpoint, {
       method: 'PATCH',
-      body: JSON.stringify(serviceIds), // Enviar array direto
+      body: JSON.stringify(serviceIds),
     })
 
     if (!response.ok) {
@@ -114,7 +113,7 @@ export async function addServicesOnlyAction(
       try {
         errorData = await response.json()
       } catch {
-        // Ignorar erro de parsing
+        console.error('Erro ao processar resposta da API:', Error)
       }
 
       return {
@@ -123,7 +122,6 @@ export async function addServicesOnlyAction(
       }
     }
 
-    // Se a API retornou sucesso, confiar nela sem verificação adicional
     revalidatePath('/appointments')
     revalidatePath(`/appointments/${appointmentId}`)
 
@@ -141,15 +139,12 @@ export async function addServicesOnlyAction(
   }
 }
 
-// Manter a action original para compatibilidade, mas simplificada
 export async function createAppointmentAction(
   formData: FormData,
 ): Promise<ActionResult> {
-  // Usar a nova action separada
   return await createAppointmentOnlyAction(formData)
 }
 
-// Simplificar a action de adicionar serviços
 export async function addServicesAppointmentAction(
   formData: FormData,
 ): Promise<ActionResult> {
@@ -226,8 +221,6 @@ export async function getAppointmentServicesAction(
       }
     }
 
-    // Se a API retornar um objeto com paginação
-    // A API retorna "items" em vez de "data"
     if (result.items) {
       return {
         data: result.items,
@@ -285,20 +278,20 @@ export async function getAppointmentsByUserAction(userId: number) {
 
     const result = await response.json()
 
-    // Se a API retornar um objeto com items, extrair apenas os items
     if (result && result.items && Array.isArray(result.items)) {
       return result.items
     }
 
-    // Se for um array direto, retornar como está
     if (Array.isArray(result)) {
       return result
     }
 
-    // Caso contrário, retornar array vazio
     return []
   } catch (error) {
     console.error('Erro ao buscar agendamentos:', error)
+    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+      throw error
+    }
     return []
   }
 }

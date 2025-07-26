@@ -228,7 +228,6 @@ export default function Home() {
           <h2 className="mb-1 text-2xl font-bold text-gray-800 md:text-3xl">
             PetCare Dashboard
           </h2>
-          <p className="text-gray-600">Usuário ID: {userId}</p>
         </div>
       </div>
 

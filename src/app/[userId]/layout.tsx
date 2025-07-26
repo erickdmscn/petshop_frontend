@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { getUserData } from '@/actions/utils'
+import { useAuth } from '@/hooks/useAuth'
 import Header from '../components/Header'
 
 interface UserLayoutProps {
@@ -12,37 +11,16 @@ interface UserLayoutProps {
 export default function UserLayout({ children }: UserLayoutProps) {
   const params = useParams()
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
-  const [userData, setUserData] = useState<any>(null)
+  const { isAuthenticated, isLoading, userData, error } = useAuth(true)
 
-  useEffect(() => {
-    const verifyUser = async () => {
-      try {
-        const currentUserData = await getUserData()
-
-        if (!currentUserData?.id) {
-          router.replace('/login')
-          return
-        }
-
-        // Verificar se o userId na URL corresponde ao usuário logado
-        const urlUserId = Number(params.userId)
-        if (currentUserData.id !== urlUserId.toString()) {
-          router.replace(`/${currentUserData.id}/home`)
-          return
-        }
-
-        setUserData(currentUserData)
-      } catch (error) {
-        console.error('Erro ao verificar usuário:', error)
-        router.replace('/login')
-      } finally {
-        setIsLoading(false)
-      }
+  // Verificar se o userId na URL corresponde ao usuário logado
+  if (isAuthenticated && userData?.id) {
+    const urlUserId = Number(params.userId)
+    if (userData.id !== urlUserId.toString()) {
+      router.replace(`/${userData.id}/home`)
+      return null
     }
-
-    verifyUser()
-  }, [params.userId, router])
+  }
 
   if (isLoading) {
     return (
@@ -55,8 +33,8 @@ export default function UserLayout({ children }: UserLayoutProps) {
     )
   }
 
-  if (!userData) {
-    return null
+  if (error || !isAuthenticated || !userData) {
+    return null // O useAuth já redireciona para /unauthorized
   }
 
   return (

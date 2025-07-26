@@ -10,8 +10,9 @@ import Footer from '../components/Footer'
 import { createCompanyAction } from '@/actions/companies'
 import { useFormState } from 'react-dom'
 import { fetchAddressByCEP } from '@/actions/utils'
+import { useAuth } from '@/hooks/useAuth'
+import { useRouter } from 'next/navigation'
 
-// Garante que o tipo inicial tem as mesmas propriedades do ActionResult
 const initialState = {
   success: false,
   message: '',
@@ -22,10 +23,19 @@ const initialState = {
 type ActionResult = typeof initialState
 
 const CompanyRegister: NextPage = () => {
+  const { isLoading, userData } = useAuth()
+  const router = useRouter()
   const [isLoadingCEP, setIsLoadingCEP] = useState(false)
   const [cepMessage, setCepMessage] = useState('')
 
-  // Adapta a server action para assinatura do useFormState
+  useEffect(() => {
+    if (!isLoading && userData) {
+      if (userData.role !== 'Admin') {
+        router.replace(`/${userData.id}/home`)
+      }
+    }
+  }, [isLoading, userData, router])
+
   const actionWithState = async (
     _prevState: ActionResult,
     formData: FormData,
@@ -81,9 +91,8 @@ const CompanyRegister: NextPage = () => {
     }
   }, [methods])
 
-  // Função para buscar dados de endereço pelo CEP
   const handleCEPBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-    const cep = e.target.value.replace(/\D/g, '') // Remove caracteres não numéricos
+    const cep = e.target.value.replace(/\D/g, '')
 
     if (cep.length === 8) {
       setIsLoadingCEP(true)
@@ -91,7 +100,6 @@ const CompanyRegister: NextPage = () => {
       try {
         const addressData = await fetchAddressByCEP(cep)
 
-        // Preenche os campos de endereço com os dados retornados
         methods.setValue(
           'address',
           `${addressData.street || ''} ${addressData.neighborhood || ''}`.trim(),
@@ -113,7 +121,6 @@ const CompanyRegister: NextPage = () => {
     }
   }
 
-  // Função para aplicar máscara de CEP
   const applyCEPMask = (value: string) => {
     const numbers = value.replace(/\D/g, '')
     return numbers
@@ -121,10 +128,24 @@ const CompanyRegister: NextPage = () => {
       .replace(/(-\d{3})\d+?$/, '$1')
   }
 
-  // Handler para CEP com máscara
   const handleCEPChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const maskedValue = applyCEPMask(e.target.value)
     methods.setValue('postalCode', maskedValue)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
+          <p className="text-gray-600">Verificando permissões...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (userData?.role !== 'Admin') {
+    return null
   }
 
   return (
@@ -150,7 +171,6 @@ const CompanyRegister: NextPage = () => {
 
             <FormProvider {...methods}>
               <form action={formAction} className="space-y-8">
-                {/* Campo hidden para o e-mail */}
                 <input type="hidden" {...methods.register('email')} />
 
                 <div className="rounded-lg border border-gray-200 p-4">

@@ -89,7 +89,12 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
     path: '/',
   })
 
-  redirect(`/${userData.id}/home`)
+  // Redirecionar com base no role do usuário
+  if (userData.role === 'Admin') {
+    redirect('/admin')
+  } else {
+    redirect(`/${userData.id}/home`)
+  }
 }
 
 export async function logoutAction() {
