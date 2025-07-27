@@ -14,8 +14,10 @@ import {
   type CodeFormData,
 } from '../schemas/emailVerificationSchema'
 import { sendEmailAction, verifyEmailAction } from '@/actions/email'
+import { useAuth } from '@/hooks/useAuth'
 
 const EmailVerification: NextPage = () => {
+  const { isLoading: authLoading, userData } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [step, setStep] = useState<'email' | 'code'>('email')
@@ -24,7 +26,14 @@ const EmailVerification: NextPage = () => {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  // Capturar o código da URL se existir (para debug)
+  useEffect(() => {
+    if (!authLoading && userData) {
+      if (userData.role !== 'Admin') {
+        router.replace(`/${userData.id}/home`)
+      }
+    }
+  }, [authLoading, userData, router])
+
   useEffect(() => {
     const codeFromUrl = searchParams.get('code')
     if (codeFromUrl) {
@@ -94,54 +103,79 @@ const EmailVerification: NextPage = () => {
     setMessage('')
   }
 
+  // Mostrar loading enquanto verifica autenticação
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
+          <p className="text-gray-600">Verificando permissões...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Só renderizar se for Admin
+  if (userData?.role !== 'Admin') {
+    return null
+  }
+
   return (
     <>
-      <main className="flex min-h-screen w-full flex-col">
-        <div className="flex flex-1">
-          <section className="w-[30%] bg-gradient-to-b from-emerald-400 to-cyan-400">
-            <div className="flex h-full items-center justify-center">
-              <div className="text-center text-white">
-                <h2 className="mb-4 text-2xl font-bold">
-                  {step === 'email'
-                    ? 'Verificação de E-mail'
-                    : 'Código de Verificação'}
-                </h2>
-                <p className="text-lg">
-                  {step === 'email'
-                    ? 'Digite seu e-mail para receber o código de verificação'
-                    : 'Digite o código enviado para seu e-mail'}
-                </p>
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+          <div className="rounded-lg bg-white p-8 shadow-lg">
+            {/* Header */}
+            <div className="mb-8 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+                <svg
+                  className="h-8 w-8 text-emerald-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 8l7.89 4.26c.3.16.65.16.95 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
               </div>
+              <h1 className="mb-2 text-3xl font-bold text-gray-900">
+                {step === 'email'
+                  ? 'Verificação de E-mail'
+                  : 'Código de Verificação'}
+              </h1>
+              <p className="text-gray-600">
+                {step === 'email'
+                  ? 'Digite seu e-mail para receber o código de verificação'
+                  : 'Digite o código enviado para seu e-mail'}
+              </p>
             </div>
-          </section>
 
-          <div className="w-[70%] p-8">
-            <h1 className="mb-8 text-3xl font-bold text-emerald-800">
-              {step === 'email'
-                ? 'VERIFICAÇÃO DE E-MAIL'
-                : 'CÓDIGO DE VERIFICAÇÃO'}
-            </h1>
-
+            {/* Messages */}
             {message && (
-              <div className="mb-6 rounded-md bg-green-100 p-4 text-green-800">
-                {message}
+              <div className="mb-6 rounded-md border border-green-200 bg-green-50 p-4">
+                <p className="text-green-800">{message}</p>
               </div>
             )}
 
             {error && (
-              <div className="mb-6 rounded-md bg-red-100 p-4 text-red-800">
-                {error}
+              <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4">
+                <p className="text-red-800">{error}</p>
               </div>
             )}
 
+            {/* Forms */}
             {step === 'email' ? (
               <FormProvider {...emailMethods}>
                 <form
                   onSubmit={emailMethods.handleSubmit(handleSendEmail)}
-                  className="space-y-8"
+                  className="space-y-6"
                 >
-                  <div className="rounded-lg border border-gray-200 p-4">
-                    <h2 className="mb-4 text-xl text-emerald-700">
+                  <div className="rounded-lg bg-gray-50 p-6">
+                    <h2 className="mb-4 text-lg font-semibold text-gray-900">
                       Informe seu E-mail
                     </h2>
                     <InputForm
@@ -155,9 +189,16 @@ const EmailVerification: NextPage = () => {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full rounded-md bg-emerald-400 py-3 text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-md bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {isLoading ? 'Enviando...' : 'Enviar Código'}
+                    {isLoading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                        Enviando...
+                      </div>
+                    ) : (
+                      'Enviar Código'
+                    )}
                   </button>
                 </form>
               </FormProvider>
@@ -165,19 +206,24 @@ const EmailVerification: NextPage = () => {
               <FormProvider {...codeMethods}>
                 <form
                   onSubmit={codeMethods.handleSubmit(handleVerifyCode)}
-                  className="space-y-8"
+                  className="space-y-6"
                 >
-                  <div className="rounded-lg border border-gray-200 p-4">
-                    <h2 className="mb-4 text-xl text-emerald-700">
+                  <div className="rounded-lg bg-gray-50 p-6">
+                    <h2 className="mb-4 text-lg font-semibold text-gray-900">
                       Código de Verificação
                     </h2>
-                    <p className="mb-4 text-gray-600">
-                      Código enviado para: <strong>{email}</strong>
-                    </p>
+                    <div className="mb-4 rounded-md bg-blue-50 p-3">
+                      <p className="text-sm text-blue-800">
+                        <span className="font-medium">
+                          Código enviado para:
+                        </span>{' '}
+                        <span className="font-mono">{email}</span>
+                      </p>
+                    </div>
                     <InputForm
                       label="Código"
                       name="code"
-                      placeholder="Digite o código"
+                      placeholder="Digite o código recebido"
                       type="text"
                     />
                   </div>
@@ -186,16 +232,23 @@ const EmailVerification: NextPage = () => {
                     <button
                       type="button"
                       onClick={handleBack}
-                      className="flex-1 rounded-md border border-gray-300 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+                      className="flex-1 rounded-md border border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
                     >
                       Voltar
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="flex-1 rounded-md bg-emerald-400 py-3 text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex-1 rounded-md bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {isLoading ? 'Verificando...' : 'Verificar Código'}
+                      {isLoading ? (
+                        <div className="flex items-center justify-center">
+                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                          Verificando...
+                        </div>
+                      ) : (
+                        'Verificar Código'
+                      )}
                     </button>
                   </div>
                 </form>
@@ -203,7 +256,7 @@ const EmailVerification: NextPage = () => {
             )}
           </div>
         </div>
-      </main>
+      </div>
       <Footer />
     </>
   )

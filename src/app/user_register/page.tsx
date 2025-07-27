@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { userSchema, type UserFormData } from '../schemas/userSchema'
 import { createUserAction } from '../../actions/users'
 import { getCompaniesAction } from '../../actions/companies'
+import { useAuth } from '@/hooks/useAuth'
 
 interface Company {
   companyId: number
@@ -24,6 +25,7 @@ interface Company {
 }
 
 export default function UserRegisterPage() {
+  const { isLoading, userData } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [companies, setCompanies] = useState<Company[]>([])
@@ -31,6 +33,15 @@ export default function UserRegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [verificationCode, setVerificationCode] = useState<string>('')
+
+  // Verificar se o usuário tem permissão para acessar esta página
+  useEffect(() => {
+    if (!isLoading && userData) {
+      if (userData.role !== 'Admin') {
+        router.replace(`/${userData.id}/home`)
+      }
+    }
+  }, [isLoading, userData, router])
 
   // Capturar o código da URL e email do localStorage
   useEffect(() => {
@@ -133,6 +144,23 @@ export default function UserRegisterPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Mostrar loading enquanto verifica autenticação
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
+          <p className="text-gray-600">Verificando permissões...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Só renderizar se for Admin
+  if (userData?.role !== 'Admin') {
+    return null
   }
 
   return (
