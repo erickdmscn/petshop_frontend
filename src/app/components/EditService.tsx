@@ -1,15 +1,21 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { XCircle } from 'lucide-react'
+import { useForm, FormProvider, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { serviceSchema, type ServiceFormData } from '../schemas/serviceSchema'
+import { updateServiceAction } from '@/actions/services'
+import InputForm from './InputForm'
 
 interface EditServiceProps {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void
   service: {
     serviceId: number
     name: string
-    descripton: string
+    description: string
     price: number
     duration: number
   } | null
@@ -18,40 +24,63 @@ interface EditServiceProps {
 export default function EditService({
   isOpen,
   onClose,
+  onSuccess,
   service,
 }: EditServiceProps) {
-  const [formData, setFormData] = useState({
-    name: '',
-    descripton: '',
-    price: '',
-    duration: '',
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const methods = useForm<ServiceFormData>({
+    resolver: zodResolver(serviceSchema),
+    defaultValues: {
+      serviceId: service?.serviceId ?? null,
+      name: service?.name ?? '',
+      description: service?.description ?? '',
+      price: service?.price ?? 0,
+      duration: service?.duration ?? 1,
+    },
   })
 
   useEffect(() => {
     if (service) {
-      setFormData({
+      methods.reset({
+        serviceId: service.serviceId,
         name: service.name,
-        descripton: service.descripton,
-        price: service.price.toString(),
-        duration: service.duration.toString(),
+        description: service.description,
+        price: service.price,
+        duration: service.duration,
       })
     }
-  }, [service])
+  }, [service, methods])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (data: ServiceFormData) => {
+    if (!service?.serviceId) return
 
-    // Converter os dados para o formato esperado
-    const serviceData = {
-      serviceId: service?.serviceId || 0,
-      name: formData.name,
-      descripton: formData.descripton,
-      price: parseFloat(formData.price) || 0,
-      duration: parseInt(formData.duration) || 0,
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('name', data.name)
+      formData.append('description', data.description)
+      formData.append('price', data.price.toString())
+      formData.append('duration', data.duration.toString())
+
+      const result = await updateServiceAction(service.serviceId, formData)
+
+      if (result.error) {
+        setError(result.error)
+        return
+      }
+
+      onSuccess?.()
+      onClose()
+    } catch (err) {
+      setError('Erro interno do servidor')
+      console.error('Erro ao atualizar serviço:', err)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    console.log('Dados do serviço atualizados:', serviceData)
-    onClose()
   }
 
   if (!isOpen || !service) return null
@@ -64,118 +93,86 @@ export default function EditService({
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
+            disabled={isSubmitting}
           >
             <XCircle className="h-6 w-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="name"
-              className="mb-1 block text-sm font-medium text-gray-700"
-            >
-              Nome do Serviço
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        {error && (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
+        <FormProvider {...methods}>
+          <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">
+            <InputForm
+              label="Nome do Serviço"
+              name="name"
               placeholder="Ex: Banho e Tosa Completo"
-              required
+              disabled={isSubmitting}
             />
-          </div>
-
-          <div>
-            <label
-              htmlFor="descripton"
-              className="mb-1 block text-sm font-medium text-gray-700"
-            >
-              Descrição
-            </label>
-            <textarea
-              id="descripton"
-              value={formData.descripton}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  descripton: e.target.value,
-                })
-              }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              placeholder="Descreva o serviço..."
-              rows={3}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="duration"
-                className="mb-1 block text-sm font-medium text-gray-700"
-              >
-                Duração (minutos)
+            <div className="space-y-2">
+              <label htmlFor="description" className="block text-gray-700">
+                Descrição <span className="text-red-500">*</span>
               </label>
-              <input
+              <Controller
+                name="description"
+                control={methods.control}
+                render={({ field }) => (
+                  <textarea
+                    id="description"
+                    {...field}
+                    className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-50"
+                    placeholder="Descreva o serviço..."
+                    rows={3}
+                    disabled={isSubmitting}
+                  />
+                )}
+              />
+              {methods.formState.errors.description && (
+                <p className="text-sm text-red-500">
+                  {methods.formState.errors.description.message}
+                </p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <InputForm
+                label="Duração (minutos)"
+                name="duration"
                 type="number"
-                id="duration"
-                value={formData.duration}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    duration: e.target.value,
-                  })
-                }
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 placeholder="Ex: 60, 90, 120"
-                min="1"
-                required
+                disabled={isSubmitting}
               />
-            </div>
-            <div>
-              <label
-                htmlFor="price"
-                className="mb-1 block text-sm font-medium text-gray-700"
-              >
-                Preço (R$)
-              </label>
-              <input
+              <InputForm
+                label="Preço (R$)"
+                name="price"
                 type="number"
-                id="price"
-                value={formData.price}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
-                }
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                placeholder="0.00"
-                min="0"
                 step="0.01"
-                required
+                placeholder="0.00"
+                disabled={isSubmitting}
               />
             </div>
-          </div>
-
-          <div className="mt-6 flex gap-2">
-            <button
-              type="submit"
-              className="flex-1 rounded-lg bg-blue-600 py-2 text-white transition-colors hover:bg-blue-700"
-            >
-              Salvar Alterações
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-lg border border-gray-300 py-2 text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
+            <div className="mt-6 flex gap-2">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 rounded-lg bg-emerald-600 py-2 text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="flex-1 rounded-lg border border-gray-300 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </FormProvider>
       </div>
     </div>
   )

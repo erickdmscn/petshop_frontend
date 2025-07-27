@@ -1,22 +1,68 @@
 'use client'
 
 import { NextPage } from 'next'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { companySchema, type CompanyFormData } from '../schemas/companySchema'
 import InputForm from '../components/InputForm'
 import Footer from '../components/Footer'
-import { post } from '@/services/fetchService'
-import { ENDPOINTS } from '@/config/api'
-import ProtectedRoute from '@/app/components/ProtectedRoute'
+import { createCompanyAction } from '@/actions/companies'
+import { useFormState } from 'react-dom'
+import { fetchAddressByCEP } from '@/actions/utils'
+import { useAuth } from '@/hooks/useAuth'
+import { useRouter } from 'next/navigation'
+
+const initialState = {
+  success: false,
+  message: '',
+  error: undefined as string | undefined,
+  data: undefined as any,
+}
+
+type ActionResult = typeof initialState
 
 const CompanyRegister: NextPage = () => {
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [submitStatus, setSubmitStatus] = React.useState<{
-    success?: boolean
-    message?: string
-  }>({})
+  const { isLoading, userData } = useAuth()
+  const router = useRouter()
+  const [isLoadingCEP, setIsLoadingCEP] = useState(false)
+  const [cepMessage, setCepMessage] = useState('')
+
+  useEffect(() => {
+    if (!isLoading && userData) {
+      if (userData.role !== 'Admin') {
+        router.replace(`/${userData.id}/home`)
+      }
+    }
+  }, [isLoading, userData, router])
+
+  const actionWithState = async (
+    _prevState: ActionResult,
+    formData: FormData,
+  ): Promise<ActionResult> => {
+    try {
+      const result = await createCompanyAction(formData)
+      return {
+        success: result.success ?? false,
+        message: result.error
+          ? result.error
+          : result.success
+            ? 'Empresa cadastrada com sucesso!'
+            : '',
+        error: result.error,
+        data: result.data,
+      }
+    } catch (error) {
+      console.error('Erro ao cadastrar empresa:', error)
+      return {
+        success: false,
+        message: 'Erro interno do servidor',
+        error: 'Erro interno do servidor',
+        data: undefined,
+      }
+    }
+  }
+  const [state, formAction] = useFormState(actionWithState, initialState)
 
   const methods = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
@@ -36,64 +82,74 @@ const CompanyRegister: NextPage = () => {
     },
   })
 
-  const onSubmit = async (formData: CompanyFormData) => {
-    setIsSubmitting(true)
-    setSubmitStatus({})
+  useEffect(() => {
+    const verifiedEmail = localStorage.getItem('verifiedEmail')
+    if (verifiedEmail) {
+      console.log('E-mail carregado do localStorage:', verifiedEmail)
+      methods.setValue('email', verifiedEmail)
+      localStorage.removeItem('verifiedEmail')
+    }
+  }, [methods])
 
-    try {
-      const adjustedData = {
-        companyName: formData.companyName,
-        tradeName: formData.tradeName,
-        registrationNumber: formData.registrationNumber.replace(/[^0-9]/g, ''),
-        email: formData.email,
-        phoneNumber: formData.phoneNumber.replace(/[^0-9]/g, ''),
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        country: formData.country,
-        postalCode: formData.postalCode.replace(/[^0-9]/g, ''),
+  const handleCEPBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const cep = e.target.value.replace(/\D/g, '')
+
+    if (cep.length === 8) {
+      setIsLoadingCEP(true)
+      setCepMessage('')
+      try {
+        const addressData = await fetchAddressByCEP(cep)
+
+        methods.setValue(
+          'address',
+          `${addressData.street || ''} ${addressData.neighborhood || ''}`.trim(),
+        )
+        methods.setValue('city', addressData.city || '')
+        methods.setValue('state', addressData.state || '')
+        methods.setValue('country', 'Brasil')
+        methods.setValue('postalCode', cep)
+
+        setCepMessage('Endereço carregado com sucesso!')
+      } catch (error) {
+        console.error('Erro ao buscar dados do CEP:', error)
+        setCepMessage(
+          'Erro ao buscar dados do CEP. Verifique se o número está correto.',
+        )
+      } finally {
+        setIsLoadingCEP(false)
       }
-
-      console.log('Enviando dados ajustados:', adjustedData)
-
-      // Utilizando o serviço de fetch para fazer a requisição autenticada
-      await post(ENDPOINTS.COMPANIES.BASE, adjustedData)
-
-      setSubmitStatus({
-        success: true,
-        message: 'Empresa cadastrada com sucesso!',
-      })
-
-      methods.reset({
-        companyId: null,
-        companyName: '',
-        tradeName: '',
-        registrationNumber: '',
-        email: '',
-        phoneNumber: '',
-        address: '',
-        city: '',
-        state: '',
-        country: '',
-        postalCode: '',
-        status: '',
-      })
-    } catch (error) {
-      console.error('Erro ao enviar dados:', error)
-      setSubmitStatus({
-        success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Ocorreu um erro ao cadastrar a empresa',
-      })
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
+  const applyCEPMask = (value: string) => {
+    const numbers = value.replace(/\D/g, '')
+    return numbers
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .replace(/(-\d{3})\d+?$/, '$1')
+  }
+
+  const handleCEPChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const maskedValue = applyCEPMask(e.target.value)
+    methods.setValue('postalCode', maskedValue)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
+          <p className="text-gray-600">Verificando permissões...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (userData?.role !== 'Admin') {
+    return null
+  }
+
   return (
-    <ProtectedRoute>
+    <>
       <main className="flex min-h-screen w-full flex-col">
         <div className="flex flex-1">
           <section className="w-[30%] bg-gradient-to-b from-emerald-400 to-cyan-400">
@@ -105,19 +161,18 @@ const CompanyRegister: NextPage = () => {
               CADASTRE SUA EMPRESA
             </h1>
 
-            {submitStatus.message && (
+            {(state.message || state.error) && (
               <div
-                className={`mb-6 rounded-md p-4 ${submitStatus.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                className={`mb-6 rounded-md p-4 ${state.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
               >
-                {submitStatus.message}
+                {state.message}
               </div>
             )}
 
             <FormProvider {...methods}>
-              <form
-                onSubmit={methods.handleSubmit(onSubmit)}
-                className="space-y-8"
-              >
+              <form action={formAction} className="space-y-8">
+                <input type="hidden" {...methods.register('email')} />
+
                 <div className="rounded-lg border border-gray-200 p-4">
                   <h2 className="mb-4 text-xl text-emerald-700">
                     Informações da Empresa
@@ -136,9 +191,9 @@ const CompanyRegister: NextPage = () => {
                     />
                   </div>
                   <InputForm
-                    label="Número de registro"
+                    label="CNPJ"
                     name="registrationNumber"
-                    placeholder="Rº"
+                    placeholder="00.000.000/0000-00"
                   />
                 </div>
 
@@ -146,13 +201,7 @@ const CompanyRegister: NextPage = () => {
                   <h2 className="mb-4 text-xl text-emerald-700">
                     Informações de Contato
                   </h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    <InputForm
-                      label="E-mail"
-                      name="email"
-                      placeholder="E-mail"
-                      type="email"
-                    />
+                  <div className="grid grid-cols-1 gap-4">
                     <InputForm
                       label="Telefone"
                       name="phoneNumber"
@@ -174,11 +223,37 @@ const CompanyRegister: NextPage = () => {
                       name="city"
                       placeholder="Cidade"
                     />
-                    <InputForm
-                      label="Código Postal"
-                      name="postalCode"
-                      placeholder="CEP"
-                    />
+                    <div className="relative">
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="postalCode"
+                          className="block text-gray-700"
+                        >
+                          Código Postal <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="postalCode"
+                          type="text"
+                          placeholder="00000-000"
+                          className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+                          {...methods.register('postalCode')}
+                          onBlur={handleCEPBlur}
+                          onChange={handleCEPChange}
+                        />
+                      </div>
+                      {isLoadingCEP && (
+                        <div className="absolute right-3 top-8">
+                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
+                        </div>
+                      )}
+                      {cepMessage && (
+                        <p
+                          className={`mt-1 text-sm ${cepMessage.includes('sucesso') ? 'text-green-600' : 'text-red-600'}`}
+                        >
+                          {cepMessage}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <InputForm
                     label="Endereço Completo"
@@ -189,10 +264,9 @@ const CompanyRegister: NextPage = () => {
 
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className={`w-full rounded-md py-3 text-white transition-colors ${isSubmitting ? 'bg-gray-400' : 'bg-emerald-400 hover:bg-emerald-500'}`}
+                  className="w-full rounded-md bg-emerald-400 py-3 text-white transition-colors hover:bg-emerald-500"
                 >
-                  {isSubmitting ? 'ENVIANDO...' : 'CADASTRAR'}
+                  CADASTRAR
                 </button>
               </form>
             </FormProvider>
@@ -200,7 +274,7 @@ const CompanyRegister: NextPage = () => {
         </div>
       </main>
       <Footer />
-    </ProtectedRoute>
+    </>
   )
 }
 

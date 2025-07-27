@@ -2,34 +2,66 @@
 
 import { useState } from 'react'
 import { XCircle } from 'lucide-react'
+import { useForm, FormProvider } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { serviceSchema, type ServiceFormData } from '../schemas/serviceSchema'
+import { createServiceAction } from '@/actions/services'
+import InputForm from './InputForm'
 
 interface CreateServiceProps {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void
 }
 
-export default function CreateService({ isOpen, onClose }: CreateServiceProps) {
-  const [formData, setFormData] = useState({
-    name: '',
-    descripton: '', // Mantendo o nome como está no JSON (com erro de digitação)
-    price: '',
-    duration: '',
+export default function CreateService({
+  isOpen,
+  onClose,
+  onSuccess,
+}: CreateServiceProps) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const methods = useForm<ServiceFormData>({
+    resolver: zodResolver(serviceSchema),
+    defaultValues: {
+      serviceId: null,
+      name: '',
+      description: '',
+      price: 0,
+      duration: 1,
+    },
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (data: ServiceFormData) => {
+    setIsLoading(true)
+    setError(null)
 
-    // Converter os dados para o formato esperado
-    const serviceData = {
-      serviceId: 0,
-      name: formData.name,
-      descripton: formData.descripton, // Mantendo conforme o JSON
-      price: parseFloat(formData.price) || 0,
-      duration: parseInt(formData.duration) || 0,
+    try {
+      // Criar FormData para enviar para a action
+      const formData = new FormData()
+      formData.append('name', data.name)
+      formData.append('description', data.description)
+      formData.append('price', data.price.toString())
+      formData.append('duration', data.duration.toString())
+
+      const result = await createServiceAction(formData)
+
+      if (result.error) {
+        setError(result.error)
+      } else {
+        // Sucesso - resetar form e fechar modal
+        methods.reset()
+        if (onSuccess) {
+          onSuccess()
+        }
+        onClose()
+      }
+    } catch (err) {
+      setError('Erro inesperado ao criar serviço')
+    } finally {
+      setIsLoading(false)
     }
-
-    console.log('Dados do serviço:', serviceData)
-    onClose()
   }
 
   if (!isOpen) return null
@@ -47,113 +79,69 @@ export default function CreateService({ isOpen, onClose }: CreateServiceProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="name"
-              className="mb-1 block text-sm font-medium text-gray-700"
-            >
-              Nome do Serviço
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        <FormProvider {...methods}>
+          <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">
+            {error && (
+              <div className="rounded-md bg-red-50 p-3">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <InputForm
+              label="Nome do Serviço"
+              name="name"
               placeholder="Ex: Banho e Tosa Completo"
-              required
             />
-          </div>
-
-          <div>
-            <label
-              htmlFor="descripton"
-              className="mb-1 block text-sm font-medium text-gray-700"
-            >
-              Descrição
-            </label>
-            <textarea
-              id="descripton"
-              value={formData.descripton}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  descripton: e.target.value,
-                })
-              }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              placeholder="Descreva o serviço..."
-              rows={3}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="duration"
-                className="mb-1 block text-sm font-medium text-gray-700"
-              >
-                Duração (minutos)
+            <div className="space-y-2">
+              <label htmlFor="description" className="block text-gray-700">
+                Descrição <span className="text-red-500">*</span>
               </label>
-              <input
+              <textarea
+                id="description"
+                {...methods.register('description')}
+                className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+                placeholder="Descreva o serviço..."
+                rows={3}
+              />
+              {methods.formState.errors.description && (
+                <p className="text-sm text-red-500">
+                  {methods.formState.errors.description.message}
+                </p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <InputForm
+                label="Duração (minutos)"
+                name="duration"
                 type="number"
-                id="duration"
-                value={formData.duration}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    duration: e.target.value,
-                  })
-                }
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 placeholder="Ex: 60, 90, 120"
-                min="1"
-                required
               />
-            </div>
-            <div>
-              <label
-                htmlFor="price"
-                className="mb-1 block text-sm font-medium text-gray-700"
-              >
-                Preço (R$)
-              </label>
-              <input
+              <InputForm
+                label="Preço (R$)"
+                name="price"
                 type="number"
-                id="price"
-                value={formData.price}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
-                }
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 placeholder="0.00"
-                min="0"
-                step="0.01"
-                required
               />
             </div>
-          </div>
-
-          <div className="mt-6 flex gap-2">
-            <button
-              type="submit"
-              className="flex-1 rounded-lg bg-blue-600 py-2 text-white transition-colors hover:bg-blue-700"
-            >
-              Criar Serviço
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-lg border border-gray-300 py-2 text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
+            <div className="mt-6 flex gap-2">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="flex-1 rounded-lg bg-emerald-600 py-2 text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400"
+              >
+                {isLoading ? 'Criando...' : 'Criar Serviço'}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isLoading}
+                className="flex-1 rounded-lg border border-gray-300 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </FormProvider>
       </div>
     </div>
   )

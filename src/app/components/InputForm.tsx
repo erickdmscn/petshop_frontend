@@ -6,7 +6,10 @@ interface InputProps {
   name: string
   placeholder: string
   type?: string
+  step?: string
   required?: boolean
+  disabled?: boolean
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void
 }
 
 const InputForm: React.FC<InputProps> = ({
@@ -14,7 +17,10 @@ const InputForm: React.FC<InputProps> = ({
   name,
   placeholder,
   type = 'text',
+  step,
   required = true,
+  disabled = false,
+  onFocus,
 }) => {
   const {
     register,
@@ -29,8 +35,11 @@ const InputForm: React.FC<InputProps> = ({
       <input
         id={name}
         type={type}
+        step={step}
         placeholder={placeholder}
-        className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+        disabled={disabled}
+        className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
+        onFocus={onFocus}
         {...register(name)}
       />
       {errors[name] && (
