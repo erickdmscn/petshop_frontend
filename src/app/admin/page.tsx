@@ -65,16 +65,14 @@ export default function AdminDashboard() {
   const [actionLoading, setActionLoading] = useState(false)
   const pageSize = 10
 
-  // Verificar se o usuário tem permissão para acessar esta página
   useEffect(() => {
     if (!isLoading && userData) {
       if (userData.role !== 'Admin') {
-        router.replace(`/${userData.id}/home`)
+        router.replace('/unauthorized')
       }
     }
   }, [isLoading, userData, router])
 
-  // Buscar companies
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
@@ -98,7 +96,6 @@ export default function AdminDashboard() {
     }
   }, [isLoading, userData])
 
-  // Buscar users se houver companies registradas
   useEffect(() => {
     const fetchUsers = async () => {
       if (companies.length === 0) return
@@ -155,7 +152,6 @@ export default function AdminDashboard() {
       if (result.error) {
         setError(result.error)
       } else {
-        // Recarregar a lista de usuários
         const usersData: UsersResponse = await getUsersAction(
           currentPage,
           pageSize,
@@ -188,7 +184,6 @@ export default function AdminDashboard() {
       if (result.error) {
         setError(result.error)
       } else {
-        // Recarregar a lista de usuários
         try {
           const usersData: UsersResponse = await getUsersAction(
             currentPage,
@@ -224,7 +219,6 @@ export default function AdminDashboard() {
     setError(null)
   }
 
-  // Mostrar loading enquanto verifica autenticação
   if (isLoading || companiesLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -236,12 +230,10 @@ export default function AdminDashboard() {
     )
   }
 
-  // Só renderizar se for Admin
   if (userData?.role !== 'Admin') {
     return null
   }
 
-  // Se não há companies registradas
   if (companies.length === 0) {
     return (
       <>
@@ -291,7 +283,6 @@ export default function AdminDashboard() {
     )
   }
 
-  // Se há companies registradas, mostrar tabela de users
   return (
     <>
       <div className="min-h-screen bg-gray-50">

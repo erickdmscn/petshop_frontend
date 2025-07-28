@@ -6,7 +6,7 @@ import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { companySchema, type CompanyFormData } from '../schemas/companySchema'
 import InputForm from '../components/InputForm'
-import Footer from '../components/Footer'
+
 import { createCompanyAction } from '@/actions/companies'
 import { useFormState } from 'react-dom'
 import { fetchAddressByCEP } from '@/actions/utils'
@@ -31,7 +31,7 @@ const CompanyRegister: NextPage = () => {
   useEffect(() => {
     if (!isLoading && userData) {
       if (userData.role !== 'Admin') {
-        router.replace(`/${userData.id}/home`)
+        router.replace('/unauthorized')
       }
     }
   }, [isLoading, userData, router])
@@ -150,22 +150,47 @@ const CompanyRegister: NextPage = () => {
 
   return (
     <>
-      <main className="flex min-h-screen w-full flex-col">
-        <div className="flex flex-1">
-          <section className="w-[30%] bg-gradient-to-b from-emerald-400 to-cyan-400">
-            <div className="flex h-full items-center justify-center"></div>
-          </section>
-
-          <div className="w-[70%] p-8">
-            <h1 className="mb-8 text-3xl font-bold text-emerald-800">
-              CADASTRE SUA EMPRESA
-            </h1>
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="rounded-lg bg-white p-8 shadow-lg">
+            {/* Header */}
+            <div className="mb-8 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+                <svg
+                  className="h-8 w-8 text-emerald-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  />
+                </svg>
+              </div>
+              <h1 className="mb-2 text-3xl font-bold text-gray-900">
+                Cadastro de Empresa
+              </h1>
+              <p className="text-gray-600">
+                Preencha os dados da empresa para continuar
+              </p>
+            </div>
 
             {(state.message || state.error) && (
               <div
-                className={`mb-6 rounded-md p-4 ${state.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                className={`mb-6 rounded-md border p-4 ${
+                  state.success
+                    ? 'border-green-200 bg-green-50'
+                    : 'border-red-200 bg-red-50'
+                }`}
               >
-                {state.message}
+                <p
+                  className={state.success ? 'text-green-800' : 'text-red-800'}
+                >
+                  {state.message}
+                </p>
               </div>
             )}
 
@@ -173,35 +198,39 @@ const CompanyRegister: NextPage = () => {
               <form action={formAction} className="space-y-8">
                 <input type="hidden" {...methods.register('email')} />
 
-                <div className="rounded-lg border border-gray-200 p-4">
-                  <h2 className="mb-4 text-xl text-emerald-700">
+                {/* Informações da Empresa */}
+                <div className="rounded-lg bg-gray-50 p-6">
+                  <h2 className="mb-6 text-xl font-semibold text-gray-900">
                     Informações da Empresa
                   </h2>
-                  <div className="mb-4 grid grid-cols-2 gap-4">
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                      <InputForm
+                        label="Nome da empresa"
+                        name="companyName"
+                        placeholder="Nome da empresa"
+                      />
+                      <InputForm
+                        label="Nome Comercial"
+                        name="tradeName"
+                        placeholder="Nome Comercial"
+                        required={false}
+                      />
+                    </div>
                     <InputForm
-                      label="Nome da empresa"
-                      name="companyName"
-                      placeholder="Nome da empresa"
-                    />
-                    <InputForm
-                      label="Nome Comercial"
-                      name="tradeName"
-                      placeholder="Nome Comercial"
-                      required={false}
+                      label="CNPJ"
+                      name="registrationNumber"
+                      placeholder="00.000.000/0000-00"
                     />
                   </div>
-                  <InputForm
-                    label="CNPJ"
-                    name="registrationNumber"
-                    placeholder="00.000.000/0000-00"
-                  />
                 </div>
 
-                <div className="rounded-lg border border-gray-200 p-4">
-                  <h2 className="mb-4 text-xl text-emerald-700">
+                {/* Informações de Contato */}
+                <div className="rounded-lg bg-gray-50 p-6">
+                  <h2 className="mb-6 text-xl font-semibold text-gray-900">
                     Informações de Contato
                   </h2>
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-6">
                     <InputForm
                       label="Telefone"
                       name="phoneNumber"
@@ -211,69 +240,81 @@ const CompanyRegister: NextPage = () => {
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-gray-200 p-4">
-                  <h2 className="mb-4 text-xl text-emerald-700">Endereço</h2>
-                  <div className="mb-4 grid grid-cols-2 gap-4">
-                    <InputForm label="País" name="country" placeholder="País" />
-                    <InputForm label="Estado" name="state" placeholder="UF" />
-                  </div>
-                  <div className="mb-4 grid grid-cols-2 gap-4">
-                    <InputForm
-                      label="Cidade"
-                      name="city"
-                      placeholder="Cidade"
-                    />
-                    <div className="relative">
+                {/* Endereço */}
+                <div className="rounded-lg bg-gray-50 p-6">
+                  <h2 className="mb-6 text-xl font-semibold text-gray-900">
+                    Endereço
+                  </h2>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                      <InputForm
+                        label="País"
+                        name="country"
+                        placeholder="País"
+                      />
+                      <InputForm label="Estado" name="state" placeholder="UF" />
+                    </div>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                      <InputForm
+                        label="Cidade"
+                        name="city"
+                        placeholder="Cidade"
+                      />
                       <div className="space-y-2">
                         <label
                           htmlFor="postalCode"
-                          className="block text-gray-700"
+                          className="block text-sm font-medium text-gray-700"
                         >
                           Código Postal <span className="text-red-500">*</span>
                         </label>
-                        <input
-                          id="postalCode"
-                          type="text"
-                          placeholder="00000-000"
-                          className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
-                          {...methods.register('postalCode')}
-                          onBlur={handleCEPBlur}
-                          onChange={handleCEPChange}
-                        />
-                      </div>
-                      {isLoadingCEP && (
-                        <div className="absolute right-3 top-8">
-                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
+                        <div className="relative">
+                          <input
+                            id="postalCode"
+                            type="text"
+                            placeholder="00000-000"
+                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-500 shadow-sm transition-colors focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                            {...methods.register('postalCode')}
+                            onBlur={handleCEPBlur}
+                            onChange={handleCEPChange}
+                          />
+                          {isLoadingCEP && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {cepMessage && (
-                        <p
-                          className={`mt-1 text-sm ${cepMessage.includes('sucesso') ? 'text-green-600' : 'text-red-600'}`}
-                        >
-                          {cepMessage}
-                        </p>
-                      )}
+                        {cepMessage && (
+                          <p
+                            className={`text-sm ${
+                              cepMessage.includes('sucesso')
+                                ? 'text-green-600'
+                                : 'text-red-600'
+                            }`}
+                          >
+                            {cepMessage}
+                          </p>
+                        )}
+                      </div>
                     </div>
+                    <InputForm
+                      label="Endereço Completo"
+                      name="address"
+                      placeholder="Endereço"
+                    />
                   </div>
-                  <InputForm
-                    label="Endereço Completo"
-                    name="address"
-                    placeholder="Endereço"
-                  />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full rounded-md bg-emerald-400 py-3 text-white transition-colors hover:bg-emerald-500"
+                  className="w-full rounded-md bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                 >
-                  CADASTRAR
+                  Cadastrar Empresa
                 </button>
               </form>
             </FormProvider>
           </div>
         </div>
-      </main>
-      <Footer />
+      </div>
     </>
   )
 }

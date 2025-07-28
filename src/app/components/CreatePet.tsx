@@ -60,11 +60,13 @@ export default function CreatePet({ isOpen, onClose }: CreatePetProps) {
       if (result.success) {
         methods.reset()
         onClose()
-        // Recarregar a página para atualizar a lista de pets
+
         window.location.reload()
       }
     } catch (err) {
-      setError('Erro interno do servidor')
+      setError(
+        `Erro interno do servidor: ${err instanceof Error ? err.message : 'Erro desconhecido'}`,
+      )
     } finally {
       setIsLoading(false)
     }

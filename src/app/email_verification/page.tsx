@@ -17,7 +17,7 @@ import { sendEmailAction, verifyEmailAction } from '@/actions/email'
 import { useAuth } from '@/hooks/useAuth'
 
 const EmailVerification: NextPage = () => {
-  const { isLoading: authLoading, userData } = useAuth()
+  const { isLoading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [step, setStep] = useState<'email' | 'code'>('email')
@@ -25,14 +25,6 @@ const EmailVerification: NextPage = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (!authLoading && userData) {
-      if (userData.role !== 'Admin') {
-        router.replace(`/${userData.id}/home`)
-      }
-    }
-  }, [authLoading, userData, router])
 
   useEffect(() => {
     const codeFromUrl = searchParams.get('code')
@@ -113,11 +105,6 @@ const EmailVerification: NextPage = () => {
         </div>
       </div>
     )
-  }
-
-  // Só renderizar se for Admin
-  if (userData?.role !== 'Admin') {
-    return null
   }
 
   return (
