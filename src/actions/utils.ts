@@ -27,7 +27,6 @@ export async function authenticatedFetch(
       ...(options.headers as any),
     }
 
-    // Se tiver body e NÃO for FormData, asseguramos JSON
     if (body && !(body instanceof FormData)) {
       if (typeof body !== 'string') {
         body = JSON.stringify(body)
@@ -43,7 +42,6 @@ export async function authenticatedFetch(
       body,
     })
 
-    // Se receber 401, limpar cookies e redirecionar
     if (response.status === 401) {
       console.log('Token expirado ou inválido, limpando sessão...')
       const cookieStore = await cookies()

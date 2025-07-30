@@ -23,7 +23,6 @@ export async function createAppointmentOnlyAction(
       paymentMethod: Number(formData.get('paymentMethod')),
       notes: (formData.get('notes') as string) || '',
     }
-
     if (
       !appointmentData.userId ||
       !appointmentData.petId ||
@@ -45,7 +44,6 @@ export async function createAppointmentOnlyAction(
       return { error: errorData.message || 'Erro ao criar agendamento' }
     }
 
-    // Extrair appointmentId da resposta
     let appointmentId = null
     try {
       const data = await response.json()
@@ -56,7 +54,6 @@ export async function createAppointmentOnlyAction(
         error,
       )
 
-      // Fallback: tentar extrair do header Location se JSON falhar
       const locationHeader = response.headers.get('location')
       if (locationHeader) {
         const idMatch = locationHeader.match(/\/(\d+)$/)

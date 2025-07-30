@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { XCircle, Check, Loader2 } from 'lucide-react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import toast from 'react-hot-toast'
 import {
   appointmentSchema,
   type AppointmentFormData,
@@ -138,13 +139,16 @@ export default function CreateAppointment({
 
       if (result.error) {
         setError(result.error)
+        toast.error(`Erro ao criar agendamento: ${result.error}`)
         setIsProcessing(false)
         return
       }
 
       const appointmentId = result.data?.appointmentId
       if (!appointmentId) {
-        setError('Erro: ID do agendamento não foi retornado')
+        const errorMsg = 'Erro: ID do agendamento não foi retornado'
+        setError(errorMsg)
+        toast.error(errorMsg)
         setIsProcessing(false)
         return
       }
@@ -153,16 +157,21 @@ export default function CreateAppointment({
       methods.reset()
       setModalState('success')
       setIsProcessing(false)
+      toast.success('Agendamento criado com sucesso!')
     } catch (err) {
       console.error('Erro ao criar agendamento:', err)
-      setError('Erro interno do servidor')
+      const errorMsg = 'Erro interno do servidor'
+      setError(errorMsg)
+      toast.error(errorMsg)
       setIsProcessing(false)
     }
   }
 
   const handleAssociateServices = async () => {
     if (!createdAppointmentId || selectedServiceIds.length === 0) {
-      setError('Selecione pelo menos um serviço')
+      const errorMsg = 'Selecione pelo menos um serviço'
+      setError(errorMsg)
+      toast.error(errorMsg)
       return
     }
 
@@ -177,17 +186,21 @@ export default function CreateAppointment({
 
       if (result.error) {
         setError(result.error)
+        toast.error(`Erro ao associar serviços: ${result.error}`)
         setIsProcessing(false)
         return
       }
 
+      toast.success('Serviços associados com sucesso!')
       if (onSuccess) {
         onSuccess()
       }
       onClose()
     } catch (err) {
       console.error('Erro ao associar serviços:', err)
-      setError('Erro interno do servidor')
+      const errorMsg = 'Erro interno do servidor'
+      setError(errorMsg)
+      toast.error(errorMsg)
       setIsProcessing(false)
     }
   }

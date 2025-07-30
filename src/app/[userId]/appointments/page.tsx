@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { Plus, Trash2 } from 'lucide-react'
-import { getAppointmentsByUserAction } from '@/actions/appointments'
+import { Plus, Trash2, DollarSign } from 'lucide-react'
+import { getAppointmentServicesAction } from '@/actions/appointments'
 import { getPetsByUserAction } from '@/actions/pets'
 import CreateAppointment from '../../components/CreateAppointment'
 import DeleteAppointmentModal from '../../components/DeleteAppointmentModal'
@@ -89,12 +89,16 @@ export default function AppointmentsPage() {
     setLoading(true)
 
     try {
-      const [appointmentsData, petsData] = await Promise.all([
-        getAppointmentsByUserAction(userId),
+      const [appointmentsResponse, petsData] = await Promise.all([
+        getAppointmentServicesAction(1, 20),
         getPetsByUserAction(userId),
       ])
 
-      setAppointments(appointmentsData || [])
+      // Se o retorno tiver a estrutura com items, usar items, senão usar data
+      const appointmentsData =
+        appointmentsResponse.items || appointmentsResponse.data || []
+
+      setAppointments(appointmentsData)
       setPets(petsData || [])
     } catch (err) {
       console.error('Erro ao carregar dados:', err)
@@ -155,6 +159,32 @@ export default function AppointmentsPage() {
           <Plus className="h-4 w-4 md:h-5 md:w-5" />
           Novo Agendamento
         </button>
+      </div>
+
+      <div className="mb-6 rounded-xl border bg-white p-4 shadow-sm md:p-6">
+        <div className="flex items-center gap-4">
+          <div className="rounded-lg bg-emerald-50 p-3">
+            <DollarSign className="h-6 w-6 text-emerald-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-gray-600 md:text-base">
+              Receita Total dos Agendamentos
+            </h3>
+            <p className="text-2xl font-bold text-gray-800 md:text-3xl">
+              R${' '}
+              {safeAppointments
+                .reduce(
+                  (sum, appointment) => sum + (appointment?.totalPrice || 0),
+                  0,
+                )
+                .toFixed(2)}
+            </p>
+            <p className="text-sm text-gray-500">
+              {safeAppointments.length} agendamento
+              {safeAppointments.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-4">

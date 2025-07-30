@@ -4,6 +4,7 @@ import { XCircle } from 'lucide-react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 import {
   petSchema,
   type PetFormData,
@@ -54,19 +55,20 @@ export default function CreatePet({ isOpen, onClose }: CreatePetProps) {
 
       if (result.error) {
         setError(result.error)
+        toast.error(`Erro ao cadastrar pet: ${result.error}`)
         return
       }
 
       if (result.success) {
         methods.reset()
+        toast.success('Pet cadastrado com sucesso!')
         onClose()
-
         window.location.reload()
       }
     } catch (err) {
-      setError(
-        `Erro interno do servidor: ${err instanceof Error ? err.message : 'Erro desconhecido'}`,
-      )
+      const errorMsg = `Erro interno do servidor: ${err instanceof Error ? err.message : 'Erro desconhecido'}`
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setIsLoading(false)
     }

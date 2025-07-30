@@ -14,7 +14,7 @@ import { useParams, useRouter } from 'next/navigation'
 import CreateAppointment from '../../components/CreateAppointment'
 import CreatePet from '../../components/CreatePet'
 import CreateService from '../../components/CreateService'
-import { getAppointmentsByUserAction } from '@/actions/appointments'
+import { getAppointmentServicesAction } from '@/actions/appointments'
 import { getPetsByUserAction } from '@/actions/pets'
 import { getAllServicesAction } from '@/actions/services'
 
@@ -78,33 +78,25 @@ export default function Home() {
 
   const [loading, setLoading] = useState(true)
 
-  // Garantir que sempre sejam arrays válidos
   const safeAppointments = Array.isArray(appointments) ? appointments : []
   const safePets = Array.isArray(pets) ? pets : []
   const safeServices = servicesData?.data || services || []
 
-  // Função para recarregar os dados
   const loadUserData = async () => {
     if (!userId) return
 
     setLoading(true)
 
     try {
-      // Carregar agendamentos do usuário
-      const appointmentsData = await getAppointmentsByUserAction(userId)
-      setAppointments(appointmentsData || [])
+      const appointmentsResponse = await getAppointmentServicesAction(1, 50)
+      setAppointments(appointmentsResponse?.data || [])
 
-      // Carregar pets do usuário
       const petsData = await getPetsByUserAction(userId)
       setPets(petsData || [])
 
-      // Carregar todos os serviços (primeira página com mais itens para o dashboard)
       const servicesResponse = await getAllServicesAction(1, 50)
       setServicesData(servicesResponse)
       setServices(servicesResponse?.data || [])
-
-      // Carregar serviços de appointment (comentado por enquanto)
-      // const appointmentServicesResponse = await getAppointmentServicesAction(1, 50)
     } catch (err) {
       console.error('Erro ao carregar dados:', err)
     } finally {
@@ -112,12 +104,10 @@ export default function Home() {
     }
   }
 
-  // Carregar dados do usuário
   useEffect(() => {
     loadUserData()
   }, [userId])
 
-  // Função para recarregar apenas os serviços
   const reloadServices = async () => {
     try {
       const servicesResponse = await getAllServicesAction(1, 50)
@@ -128,29 +118,26 @@ export default function Home() {
     }
   }
 
-  // Função para mapear status numérico para texto legível
   const getStatusFromNumber = (statusNum: number): string => {
     switch (statusNum) {
       case 1:
-        return 'pending' // SCHEDULED
+        return 'pending'
       case 2:
-        return 'confirmed' // IN_PROGRESS
+        return 'confirmed'
       case 3:
-        return 'completed' // COMPLETED
+        return 'completed'
       case 4:
-        return 'cancelled' // CANCELED
+        return 'cancelled'
       default:
         return 'pending'
     }
   }
 
-  // Função para obter nome do pet (temporário até ter junção no backend)
   const getPetName = (petId: number): string => {
     const pet = safePets.find((p) => p.petsId === petId)
     return pet?.fullName || `Pet #${petId}`
   }
 
-  // Estatísticas baseadas nos dados reais
   const stats = [
     {
       title: 'Agendamentos',
@@ -180,7 +167,7 @@ export default function Home() {
       trend: `${safeServices.filter((s: Service) => s.isActive !== false).length} ativos`,
     },
     {
-      title: 'Total Investido',
+      title: 'Receita Total',
       value: `R$ ${safeAppointments.reduce((sum, a) => sum + (a?.totalPrice || 0), 0).toFixed(2)}`,
       icon: Users,
       color: 'orange',
@@ -205,7 +192,7 @@ export default function Home() {
       date: appointment.appointmentDate
         ? new Date(appointment.appointmentDate).toLocaleDateString('pt-BR')
         : '--/--/----',
-      time: '--:--', // Removido horário
+      time: '--:--',
       icon: Calendar,
     })),
   ]

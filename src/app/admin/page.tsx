@@ -10,7 +10,7 @@ import {
   updateUserTypeAction,
 } from '@/actions/users'
 import Footer from '../components/Footer'
-import { Edit, Trash2, X } from 'lucide-react'
+import { Edit, Trash2, X, LogOut } from 'lucide-react'
 
 interface Company {
   companyId: number
@@ -49,7 +49,7 @@ interface UsersResponse {
 }
 
 export default function AdminDashboard() {
-  const { isLoading, userData } = useAuth()
+  const { isLoading, userData, logout } = useAuth()
   const router = useRouter()
   const [companies, setCompanies] = useState<Company[]>([])
   const [users, setUsers] = useState<User[]>([])
@@ -237,45 +237,57 @@ export default function AdminDashboard() {
   if (companies.length === 0) {
     return (
       <>
-        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-6">
-          <div className="max-w-md text-center">
-            <div className="mb-8">
-              <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-100">
-                <svg
-                  className="h-12 w-12 text-emerald-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                  />
-                </svg>
-              </div>
-              <h1 className="mb-4 text-3xl font-bold text-gray-900">
-                Bem-vindo ao Sistema
-              </h1>
-              <p className="mb-8 text-lg text-gray-600">
-                Para começar a usar o sistema, você precisa registrar sua
-                empresa primeiro.
-              </p>
-            </div>
-
-            {error && (
-              <div className="mb-6 rounded-lg border border-red-300 bg-red-100 p-4 text-red-700">
-                {error}
-              </div>
-            )}
-
+        <div className="flex min-h-screen flex-col bg-gray-50">
+          <div className="flex justify-end p-6">
             <button
-              onClick={handleCompanyRegister}
-              className="w-full rounded-lg bg-emerald-600 px-6 py-4 font-semibold text-white shadow-lg transition-colors duration-200 hover:bg-emerald-700"
+              onClick={logout}
+              className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
+              title="Sair"
             >
-              REGISTRAR EMPRESA
+              <LogOut className="h-5 w-5" />
+              Sair
             </button>
+          </div>
+          <div className="flex flex-1 items-center justify-center px-6">
+            <div className="max-w-md text-center">
+              <div className="mb-8">
+                <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-100">
+                  <svg
+                    className="h-12 w-12 text-emerald-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                    />
+                  </svg>
+                </div>
+                <h1 className="mb-4 text-3xl font-bold text-gray-900">
+                  Bem-vindo ao Sistema
+                </h1>
+                <p className="mb-8 text-lg text-gray-600">
+                  Para começar a usar o sistema, você precisa registrar sua
+                  empresa primeiro.
+                </p>
+              </div>
+
+              {error && (
+                <div className="mb-6 rounded-lg border border-red-300 bg-red-100 p-4 text-red-700">
+                  {error}
+                </div>
+              )}
+
+              <button
+                onClick={handleCompanyRegister}
+                className="w-full rounded-lg bg-emerald-600 px-6 py-4 font-semibold text-white shadow-lg transition-colors duration-200 hover:bg-emerald-700"
+              >
+                REGISTRAR EMPRESA
+              </button>
+            </div>
           </div>
         </div>
         <Footer />
@@ -287,11 +299,23 @@ export default function AdminDashboard() {
     <>
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-6 py-8">
-          <div className="mb-8">
-            <h1 className="mb-2 text-3xl font-bold text-gray-900">
-              Dashboard Administrativo
-            </h1>
-            <p className="text-gray-600">Gerencie os usuários da sua empresa</p>
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="mb-2 text-3xl font-bold text-gray-900">
+                Dashboard Administrativo
+              </h1>
+              <p className="text-gray-600">
+                Gerencie os usuários da sua empresa
+              </p>
+            </div>
+            <button
+              onClick={logout}
+              className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
+              title="Sair"
+            >
+              <LogOut className="h-5 w-5" />
+              Sair
+            </button>
           </div>
 
           {error && (

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { XCircle } from 'lucide-react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import toast from 'react-hot-toast'
 import { serviceSchema, type ServiceFormData } from '../schemas/serviceSchema'
 import { createServiceAction } from '@/actions/services'
 import InputForm from './InputForm'
@@ -49,16 +50,20 @@ export default function CreateService({
 
       if (result.error) {
         setError(result.error)
+        toast.error(`Erro ao criar serviço: ${result.error}`)
       } else {
         // Sucesso - resetar form e fechar modal
         methods.reset()
+        toast.success('Serviço criado com sucesso!')
         if (onSuccess) {
           onSuccess()
         }
         onClose()
       }
     } catch (err) {
-      setError('Erro inesperado ao criar serviço')
+      const errorMsg = 'Erro inesperado ao criar serviço'
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setIsLoading(false)
     }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import toast from 'react-hot-toast'
 import { userSchema, type UserFormData } from '../schemas/userSchema'
 import { createUserAction } from '../../actions/users'
 import { getCompaniesAction } from '../../actions/companies'
@@ -94,9 +95,10 @@ export default function UserRegisterPage() {
       // Pegar email do localStorage
       const emailFromStorage = localStorage.getItem('verifiedEmail')
       if (!emailFromStorage) {
-        setError(
-          'Email não encontrado. Acesse através da verificação de email.',
-        )
+        const errorMsg =
+          'Email não encontrado. Acesse através da verificação de email.'
+        setError(errorMsg)
+        toast.error(errorMsg)
         setLoading(false)
         return
       }
@@ -118,9 +120,10 @@ export default function UserRegisterPage() {
 
       // Usar o código capturado da URL
       if (!verificationCode) {
-        setError(
-          'Código de verificação não encontrado. Acesse através da verificação de email.',
-        )
+        const errorMsg =
+          'Código de verificação não encontrado. Acesse através da verificação de email.'
+        setError(errorMsg)
+        toast.error(errorMsg)
         setLoading(false)
         return
       }
@@ -130,15 +133,20 @@ export default function UserRegisterPage() {
       if (result.success) {
         setSuccess(true)
         reset()
+        toast.success('Usuário criado com sucesso! Redirecionando...')
         setTimeout(() => {
           router.push('/login')
         }, 2000)
       } else {
-        setError(result.error || 'Erro ao criar usuário')
+        const errorMsg = result.error || 'Erro ao criar usuário'
+        setError(errorMsg)
+        toast.error(`Erro ao criar usuário: ${errorMsg}`)
       }
     } catch (error) {
       console.error('Erro ao criar usuário:', error)
-      setError('Erro interno do servidor')
+      const errorMsg = 'Erro interno do servidor'
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setLoading(false)
     }

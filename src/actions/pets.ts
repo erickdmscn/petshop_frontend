@@ -35,7 +35,7 @@ export async function createPetAction(petData: {
       gender: Number(petData.gender),
       needAttention: Boolean(petData.needAttention),
     }
-
+    console.log(requestData)
     if (!requestData.fullName || !requestData.species) {
       return { error: 'Nome e espécie são obrigatórios' }
     }
@@ -70,7 +70,7 @@ export async function createPetAction(petData: {
         console.error('Erro ao processar resposta da API:', e)
       }
     }
-
+    console.log(data)
     revalidatePath('/pets')
     revalidatePath(`/${userData.id}/pets`)
 

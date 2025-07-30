@@ -4,6 +4,7 @@ import { NextPage } from 'next'
 import React, { useEffect, useState } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import toast from 'react-hot-toast'
 import { companySchema, type CompanyFormData } from '../schemas/companySchema'
 import InputForm from '../components/InputForm'
 
@@ -42,6 +43,13 @@ const CompanyRegister: NextPage = () => {
   ): Promise<ActionResult> => {
     try {
       const result = await createCompanyAction(formData)
+
+      if (result.success) {
+        toast.success('Empresa cadastrada com sucesso!')
+      } else if (result.error) {
+        toast.error(`Erro ao cadastrar empresa: ${result.error}`)
+      }
+
       return {
         success: result.success ?? false,
         message: result.error
@@ -54,10 +62,12 @@ const CompanyRegister: NextPage = () => {
       }
     } catch (error) {
       console.error('Erro ao cadastrar empresa:', error)
+      const errorMsg = 'Erro interno do servidor'
+      toast.error(errorMsg)
       return {
         success: false,
-        message: 'Erro interno do servidor',
-        error: 'Erro interno do servidor',
+        message: errorMsg,
+        error: errorMsg,
         data: undefined,
       }
     }
