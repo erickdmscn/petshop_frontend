@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { serviceSchema, type ServiceFormData } from '../schemas/serviceSchema'
 import { updateServiceAction } from '@/actions/services'
 import InputForm from './InputForm'
+import toast from 'react-hot-toast'
 
 interface EditServiceProps {
   isOpen: boolean
@@ -70,13 +71,17 @@ export default function EditService({
 
       if (result.error) {
         setError(result.error)
+        toast.error(`Erro ao atualizar serviço: ${result.error}`)
         return
       }
 
+      toast.success('Serviço atualizado com sucesso!')
       onSuccess?.()
       onClose()
     } catch (err) {
-      setError('Erro interno do servidor')
+      const errorMsg = 'Erro interno do servidor'
+      setError(errorMsg)
+      toast.error(errorMsg)
       console.error('Erro ao atualizar serviço:', err)
     } finally {
       setIsSubmitting(false)
