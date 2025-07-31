@@ -135,13 +135,14 @@ export async function deletePetAction(petId: string): Promise<ActionResult> {
   }
 }
 
-export async function getAllPetsAction() {
+export async function getAllPetsAction(
+  pageIndex: number = 1,
+  pageSize: number = 10,
+) {
   try {
-    const response = await authenticatedFetch('/v1/pets/GetAllPets')
-
-    if (!response.ok) {
-      throw new Error('Erro ao buscar pets')
-    }
+    const response = await authenticatedFetch(
+      `/v1/pets/GetAllPets?pageIndex=${pageIndex}&pageSize=${pageSize}`,
+    )
 
     return await response.json()
   } catch (error) {

@@ -8,14 +8,16 @@ import {
   Plus,
   User,
   Activity,
+  Trash2,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import CreateAppointment from '../../components/CreateAppointment'
 import CreatePet from '../../components/CreatePet'
 import CreateService from '../../components/CreateService'
+import DeleteModal from '../../components/DeleteModal'
 import { getAppointmentServicesAction } from '@/actions/appointments'
-import { getPetsByUserAction } from '@/actions/pets'
+import { getAllPetsAction, deletePetAction } from '@/actions/pets'
 import { getAllServicesAction } from '@/actions/services'
 
 interface Appointment {
@@ -68,6 +70,12 @@ export default function Home() {
   const [showCreateAppointment, setShowCreateAppointment] = useState(false)
   const [showCreatePet, setShowCreatePet] = useState(false)
   const [showCreateService, setShowCreateService] = useState(false)
+  const [showDeletePet, setShowDeletePet] = useState(false)
+  const [selectedPetForDelete, setSelectedPetForDelete] = useState<{
+    petsId: number
+    fullName: string
+    breed: string
+  } | null>(null)
 
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [pets, setPets] = useState<Pet[]>([])
@@ -91,8 +99,8 @@ export default function Home() {
       const appointmentsResponse = await getAppointmentServicesAction(1, 50)
       setAppointments(appointmentsResponse?.data || [])
 
-      const petsData = await getPetsByUserAction(userId)
-      setPets(petsData || [])
+      const petsResponse = await getAllPetsAction(1, 50)
+      setPets(petsResponse?.items || petsResponse?.data || petsResponse || [])
 
       const servicesResponse = await getAllServicesAction(1, 50)
       setServicesData(servicesResponse)
@@ -116,6 +124,20 @@ export default function Home() {
     } catch (err) {
       console.error('Erro ao recarregar serviços:', err)
     }
+  }
+
+  const handleDeletePet = (pet: Pet) => {
+    setSelectedPetForDelete({
+      petsId: pet.petsId,
+      fullName: pet.fullName,
+      breed: pet.breed,
+    })
+    setShowDeletePet(true)
+  }
+
+  const handleCloseDeletePet = () => {
+    setShowDeletePet(false)
+    setSelectedPetForDelete(null)
   }
 
   const getStatusFromNumber = (statusNum: number): string => {
@@ -487,11 +509,20 @@ export default function Home() {
                         <p className="text-sm text-gray-600">{pet.breed}</p>
                       </div>
                     </div>
-                    {pet.needAttention && (
-                      <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
-                        Atenção
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {pet.needAttention && (
+                        <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
+                          Atenção
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleDeletePet(pet)}
+                        className="rounded-md p-1 text-red-600 transition-colors hover:bg-red-50 hover:text-red-900"
+                        title="Deletar pet"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -565,6 +596,27 @@ export default function Home() {
           isOpen={showCreateService}
           onClose={() => setShowCreateService(false)}
           onSuccess={reloadServices}
+        />
+      )}
+
+      {showDeletePet && selectedPetForDelete && (
+        <DeleteModal
+          isOpen={showDeletePet}
+          onClose={handleCloseDeletePet}
+          onSuccess={loadUserData}
+          title="Deletar Pet"
+          confirmationMessage="Tem certeza que deseja deletar este pet?"
+          itemName={selectedPetForDelete.fullName}
+          itemDetails={[
+            {
+              label: 'Raça',
+              value: selectedPetForDelete.breed || 'Não informado',
+            },
+          ]}
+          deleteAction={() =>
+            deletePetAction(selectedPetForDelete.petsId.toString())
+          }
+          successMessage={`Pet "${selectedPetForDelete.fullName}" deletado com sucesso!`}
         />
       )}
     </>

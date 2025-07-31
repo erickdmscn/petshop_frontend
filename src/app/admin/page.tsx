@@ -4,13 +4,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { getCompaniesAction } from '@/actions/companies'
-import {
-  getUsersAction,
-  deleteUserAction,
-  updateUserTypeAction,
-} from '@/actions/users'
-import Footer from '../components/Footer'
-import { Edit, Trash2, X, LogOut } from 'lucide-react'
+import { getUsersAction, deleteUserAction } from '@/actions/users'
+import DeleteModal from '../components/DeleteModal'
+import EditUser from '../components/EditUser'
+import { Edit, Trash2, LogOut } from 'lucide-react'
 
 interface Company {
   companyId: number
@@ -59,10 +56,11 @@ export default function AdminDashboard() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalRecords, setTotalRecords] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [actionLoading, setActionLoading] = useState(false)
+  const [showDeleteUser, setShowDeleteUser] = useState(false)
+  const [selectedUserForDelete, setSelectedUserForDelete] =
+    useState<User | null>(null)
   const pageSize = 10
 
   useEffect(() => {
@@ -138,85 +136,34 @@ export default function AdminDashboard() {
   }
 
   const handleDeleteUser = (user: User) => {
-    setSelectedUser(user)
-    setDeleteModalOpen(true)
+    setSelectedUserForDelete(user)
+    setShowDeleteUser(true)
   }
 
-  const confirmDelete = async () => {
-    if (!selectedUser) return
-
-    try {
-      setActionLoading(true)
-      const result = await deleteUserAction(selectedUser.id.toString())
-
-      if (result.error) {
-        setError(result.error)
-      } else {
-        const usersData: UsersResponse = await getUsersAction(
-          currentPage,
-          pageSize,
-        )
-        const usersList = usersData?.items || []
-        setUsers(usersList)
-        setTotalRecords(usersData?.totalCount || 0)
-        setTotalPages(usersData?.totalPages || 1)
-
-        setDeleteModalOpen(false)
-        setSelectedUser(null)
-      }
-    } catch (error) {
-      console.error('Erro ao deletar usuário:', error)
-      setError('Erro ao deletar usuário')
-    } finally {
-      setActionLoading(false)
-    }
+  const handleCloseDeleteUser = () => {
+    setShowDeleteUser(false)
+    setSelectedUserForDelete(null)
   }
 
-  const confirmUpdateUserType = async () => {
-    if (!selectedUser) return
-
+  const reloadUsers = async () => {
     try {
-      setActionLoading(true)
-      setError(null)
-
-      const result = await updateUserTypeAction(selectedUser.id)
-
-      if (result.error) {
-        setError(result.error)
-      } else {
-        try {
-          const usersData: UsersResponse = await getUsersAction(
-            currentPage,
-            pageSize,
-          )
-          const usersList = usersData?.items || []
-
-          setUsers(usersList)
-          setTotalRecords(usersData?.totalCount || 0)
-          setTotalPages(usersData?.totalPages || 1)
-
-          setEditModalOpen(false)
-          setSelectedUser(null)
-        } catch (reloadError) {
-          console.error('Erro ao recarregar lista de usuários:', reloadError)
-          setError('Usuário atualizado, mas erro ao recarregar lista')
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar tipo de usuário:', error)
-      setError(
-        `Erro ao atualizar tipo de usuário: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+      const usersData: UsersResponse = await getUsersAction(
+        currentPage,
+        pageSize,
       )
-    } finally {
-      setActionLoading(false)
+      const usersList = usersData?.items || []
+      setUsers(usersList)
+      setTotalRecords(usersData?.totalCount || 0)
+      setTotalPages(usersData?.totalPages || 1)
+    } catch (error) {
+      console.error('Erro ao recarregar usuários:', error)
+      setError('Erro ao recarregar lista de usuários')
     }
   }
 
-  const closeModals = () => {
-    setDeleteModalOpen(false)
+  const handleCloseEditUser = () => {
     setEditModalOpen(false)
     setSelectedUser(null)
-    setError(null)
   }
 
   if (isLoading || companiesLoading) {
@@ -290,7 +237,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-        <Footer />
       </>
     )
   }
@@ -534,137 +480,40 @@ export default function AdminDashboard() {
       </div>
 
       {/* Modal de Confirmação de Deletar */}
-      {deleteModalOpen && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Confirmar Exclusão
-              </h3>
-              <button
-                onClick={closeModals}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="mb-6">
-              <p className="text-gray-600">
-                Tem certeza que deseja deletar o usuário{' '}
-                <span className="font-semibold">{selectedUser.fullName}</span>?
-              </p>
-              <p className="mt-2 text-sm text-gray-500">
-                Esta ação não pode ser desfeita.
-              </p>
-            </div>
-
-            {error && (
-              <div className="mb-4 rounded-md border border-red-300 bg-red-100 p-3 text-sm text-red-700">
-                {error}
-              </div>
-            )}
-
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={closeModals}
-                disabled={actionLoading}
-                className="rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmDelete}
-                disabled={actionLoading}
-                className="rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {actionLoading ? 'Deletando...' : 'Deletar'}
-              </button>
-            </div>
-          </div>
-        </div>
+      {showDeleteUser && selectedUserForDelete && (
+        <DeleteModal
+          isOpen={showDeleteUser}
+          onClose={handleCloseDeleteUser}
+          onSuccess={reloadUsers}
+          title="Deletar Usuário"
+          confirmationMessage="Tem certeza que deseja deletar este usuário?"
+          itemName={selectedUserForDelete.fullName}
+          itemDetails={[
+            {
+              label: 'Email',
+              value: selectedUserForDelete.email,
+            },
+            {
+              label: 'Tipo',
+              value: selectedUserForDelete.userType,
+            },
+          ]}
+          deleteAction={() =>
+            deleteUserAction(selectedUserForDelete.id.toString())
+          }
+          successMessage={`Usuário "${selectedUserForDelete.fullName}" deletado com sucesso!`}
+        />
       )}
 
       {/* Modal de Edição de Tipo de Usuário */}
       {editModalOpen && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Alterar Tipo de Usuário
-              </h3>
-              <button
-                onClick={closeModals}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="mb-6">
-              <p className="mb-4 text-gray-600">
-                Usuário:{' '}
-                <span className="font-semibold">{selectedUser.fullName}</span>
-              </p>
-              <p className="mb-4 text-gray-600">
-                Tipo atual:{' '}
-                <span
-                  className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                    selectedUser.userType === 'Admin'
-                      ? 'bg-purple-100 text-purple-800'
-                      : selectedUser.userType === 'Employer'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-green-100 text-green-800'
-                  }`}
-                >
-                  {selectedUser.userType}
-                </span>
-              </p>
-
-              {selectedUser.userType === 'Costumer' ? (
-                <p className="text-sm text-gray-600">
-                  Esta ação irá promover o usuário de <strong>Cliente</strong>{' '}
-                  para <strong>Funcionário</strong>.
-                </p>
-              ) : (
-                <p className="text-sm text-gray-500">
-                  Este usuário já é do tipo {selectedUser.userType} e não pode
-                  ser alterado.
-                </p>
-              )}
-            </div>
-
-            {error && (
-              <div className="mb-4 rounded-md border border-red-300 bg-red-100 p-3 text-sm text-red-700">
-                {error}
-              </div>
-            )}
-
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={closeModals}
-                disabled={actionLoading}
-                className="rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-              {selectedUser.userType === 'Costumer' && (
-                <button
-                  onClick={confirmUpdateUserType}
-                  disabled={actionLoading}
-                  className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {actionLoading
-                    ? 'Atualizando...'
-                    : 'Promover para Funcionário'}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+        <EditUser
+          isOpen={editModalOpen}
+          onClose={handleCloseEditUser}
+          onSuccess={reloadUsers}
+          user={selectedUser}
+        />
       )}
-
-      <Footer />
     </>
   )
 }

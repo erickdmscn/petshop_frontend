@@ -2,64 +2,68 @@
 
 import { useState } from 'react'
 import { XCircle, AlertTriangle } from 'lucide-react'
-import { deleteAppointmentAction } from '@/actions/appointments'
+import toast from 'react-hot-toast'
 
-interface DeleteAppointmentModalProps {
+interface DeleteModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess?: () => void
-  appointment: {
-    appointmentId: number
-    petName: string
-    appointmentDate: string
-  } | null
+  title: string
+  confirmationMessage: string
+  itemName: string
+  itemDetails?: Array<{ label: string; value: string }>
+  deleteAction: () => Promise<{ error?: string; success?: boolean }>
+  successMessage: string
 }
 
-export default function DeleteAppointmentModal({
+export default function DeleteModal({
   isOpen,
   onClose,
   onSuccess,
-  appointment,
-}: DeleteAppointmentModalProps) {
+  title,
+  confirmationMessage,
+  itemName,
+  itemDetails = [],
+  deleteAction,
+  successMessage,
+}: DeleteModalProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleDelete = async () => {
-    if (!appointment?.appointmentId) return
-
     setIsDeleting(true)
     setError(null)
 
     try {
-      const result = await deleteAppointmentAction(
-        appointment.appointmentId.toString(),
-      )
+      const result = await deleteAction()
 
       if (result.error) {
         setError(result.error)
+        toast.error(`Erro: ${result.error}`)
         return
       }
 
       // Sucesso
+      toast.success(successMessage)
       onSuccess?.()
       onClose()
     } catch (err) {
-      setError('Erro interno do servidor')
-      console.error('Erro ao deletar agendamento:', err)
+      const errorMsg = 'Erro interno do servidor'
+      setError(errorMsg)
+      toast.error(errorMsg)
+      console.error('Erro ao deletar:', err)
     } finally {
       setIsDeleting(false)
     }
   }
 
-  if (!isOpen || !appointment) return null
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div className="w-full max-w-md rounded-lg bg-white p-6">
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-semibold text-gray-900">
-            Deletar Agendamento
-          </h3>
+          <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
@@ -75,18 +79,15 @@ export default function DeleteAppointmentModal({
           </div>
 
           <div className="text-center">
-            <p className="mb-2 text-gray-900">
-              Tem certeza que deseja deletar este agendamento?
-            </p>
+            <p className="mb-2 text-gray-900">{confirmationMessage}</p>
             <p className="mb-1 text-lg font-semibold text-gray-900">
-              Pet: {appointment.petName}
+              {itemName}
             </p>
-            <p className="mb-2 text-sm text-gray-600">
-              Data:{' '}
-              {new Date(appointment.appointmentDate).toLocaleDateString(
-                'pt-BR',
-              )}
-            </p>
+            {itemDetails.map((detail, index) => (
+              <p key={index} className="mb-2 text-sm text-gray-600">
+                {detail.label}: {detail.value}
+              </p>
+            ))}
             <p className="text-sm text-gray-500">
               Esta ação não pode ser desfeita.
             </p>

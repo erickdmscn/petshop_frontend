@@ -16,7 +16,7 @@ import {
   createAppointmentOnlyAction,
   addServicesOnlyAction,
 } from '@/actions/appointments'
-import { getPetsByUserAction } from '@/actions/pets'
+import { getAllPetsAction } from '@/actions/pets'
 import { getAllServicesAction } from '@/actions/services'
 import InputForm from './InputForm'
 
@@ -88,8 +88,8 @@ export default function CreateAppointment({
 
       setLoadingPets(true)
       try {
-        const petsData = await getPetsByUserAction(userId)
-        setPets(petsData || [])
+        const petsData = await getAllPetsAction(1, 50)
+        setPets(petsData?.items || [])
       } catch (err) {
         console.error('Erro ao carregar pets:', err)
         setPets([])

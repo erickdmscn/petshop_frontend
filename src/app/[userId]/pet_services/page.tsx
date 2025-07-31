@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2 } from 'lucide-react'
-import { getAllServicesAction } from '@/actions/services'
+import { deleteServiceAction, getAllServicesAction } from '@/actions/services'
 import CreateService from '../../components/CreateService'
 import EditService from '../../components/EditService'
-import DeleteServiceModal from '../../components/DeleteServiceModal'
+import DeleteModal from '../../components/DeleteModal'
 
 interface Service {
   serviceId: number
@@ -320,11 +320,17 @@ export default function PetServicesPage() {
       )}
 
       {showDeleteService && selectedServiceForDelete && (
-        <DeleteServiceModal
+        <DeleteModal
           isOpen={showDeleteService}
           onClose={handleCloseDeleteService}
           onSuccess={loadServices}
-          service={selectedServiceForDelete}
+          title="Deletar Serviço"
+          confirmationMessage="Tem certeza que deseja deletar este serviço?"
+          itemName={selectedServiceForDelete.name}
+          deleteAction={() =>
+            deleteServiceAction(selectedServiceForDelete.serviceId.toString())
+          }
+          successMessage="Serviço deletado com sucesso"
         />
       )}
     </>

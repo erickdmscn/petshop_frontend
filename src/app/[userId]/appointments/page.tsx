@@ -3,10 +3,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Plus, Trash2, DollarSign } from 'lucide-react'
-import { getAppointmentServicesAction } from '@/actions/appointments'
-import { getPetsByUserAction } from '@/actions/pets'
+import {
+  getAppointmentServicesAction,
+  deleteAppointmentAction,
+} from '@/actions/appointments'
+import { getAllPetsAction } from '@/actions/pets'
 import CreateAppointment from '../../components/CreateAppointment'
-import DeleteAppointmentModal from '../../components/DeleteAppointmentModal'
+import DeleteModal from '../../components/DeleteModal'
 
 interface AppointmentService {
   serviceId: number
@@ -89,17 +92,16 @@ export default function AppointmentsPage() {
     setLoading(true)
 
     try {
-      const [appointmentsResponse, petsData] = await Promise.all([
+      const [appointmentsResponse, petsResponse] = await Promise.all([
         getAppointmentServicesAction(1, 20),
-        getPetsByUserAction(userId),
+        getAllPetsAction(1, 50),
       ])
 
-      // Se o retorno tiver a estrutura com items, usar items, senão usar data
       const appointmentsData =
         appointmentsResponse.items || appointmentsResponse.data || []
 
       setAppointments(appointmentsData)
-      setPets(petsData || [])
+      setPets(petsResponse?.items || petsResponse?.data || petsResponse || [])
     } catch (err) {
       console.error('Erro ao carregar dados:', err)
       // Se for erro de autenticação, o layout já vai redirecionar
@@ -401,11 +403,27 @@ export default function AppointmentsPage() {
       )}
 
       {showDeleteAppointment && selectedAppointmentForDelete && (
-        <DeleteAppointmentModal
+        <DeleteModal
           isOpen={showDeleteAppointment}
           onClose={handleCloseDeleteAppointment}
           onSuccess={loadAppointments}
-          appointment={selectedAppointmentForDelete}
+          title="Deletar Agendamento"
+          confirmationMessage="Tem certeza que deseja deletar este agendamento?"
+          itemName={selectedAppointmentForDelete.petName}
+          itemDetails={[
+            {
+              label: 'Data',
+              value: new Date(
+                selectedAppointmentForDelete.appointmentDate,
+              ).toLocaleDateString('pt-BR'),
+            },
+          ]}
+          deleteAction={() =>
+            deleteAppointmentAction(
+              selectedAppointmentForDelete.appointmentId.toString(),
+            )
+          }
+          successMessage={`Agendamento do pet "${selectedAppointmentForDelete.petName}" deletado com sucesso!`}
         />
       )}
     </>
