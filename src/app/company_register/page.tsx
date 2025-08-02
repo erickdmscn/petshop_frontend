@@ -1,7 +1,7 @@
 'use client'
 
 import { NextPage } from 'next'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useActionState } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import toast from 'react-hot-toast'
@@ -9,7 +9,6 @@ import { companySchema, type CompanyFormData } from '../schemas/companySchema'
 import InputForm from '../components/InputForm'
 
 import { createCompanyAction } from '@/actions/companies'
-import { useFormState } from 'react-dom'
 import { fetchAddressByCEP } from '@/actions/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
@@ -60,8 +59,7 @@ const CompanyRegister: NextPage = () => {
         error: result.error,
         data: result.data,
       }
-    } catch (error) {
-      console.error('Erro ao cadastrar empresa:', error)
+    } catch {
       const errorMsg = 'Erro interno do servidor'
       toast.error(errorMsg)
       return {
@@ -72,7 +70,7 @@ const CompanyRegister: NextPage = () => {
       }
     }
   }
-  const [state, formAction] = useFormState(actionWithState, initialState)
+  const [state, formAction] = useActionState(actionWithState, initialState)
 
   const methods = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
@@ -95,7 +93,6 @@ const CompanyRegister: NextPage = () => {
   useEffect(() => {
     const verifiedEmail = localStorage.getItem('verifiedEmail')
     if (verifiedEmail) {
-      console.log('E-mail carregado do localStorage:', verifiedEmail)
       methods.setValue('email', verifiedEmail)
       localStorage.removeItem('verifiedEmail')
     }
@@ -120,8 +117,7 @@ const CompanyRegister: NextPage = () => {
         methods.setValue('postalCode', cep)
 
         setCepMessage('Endereço carregado com sucesso!')
-      } catch (error) {
-        console.error('Erro ao buscar dados do CEP:', error)
+      } catch {
         setCepMessage(
           'Erro ao buscar dados do CEP. Verifique se o número está correto.',
         )

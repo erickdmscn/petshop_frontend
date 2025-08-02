@@ -1,12 +1,12 @@
 'use client'
 
 import { NextPage } from 'next'
-import React, { useState, useEffect } from 'react'
+import React, { useState, Suspense } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import InputForm from '../components/InputForm'
 import Footer from '../components/Footer'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import {
   emailSchema,
   codeSchema,
@@ -16,22 +16,14 @@ import {
 import { sendEmailAction, verifyEmailAction } from '@/actions/email'
 import { useAuth } from '@/hooks/useAuth'
 
-const EmailVerification: NextPage = () => {
+const EmailVerificationContent: React.FC = () => {
   const { isLoading: authLoading } = useAuth()
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [step, setStep] = useState<'email' | 'code'>('email')
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    const codeFromUrl = searchParams.get('code')
-    if (codeFromUrl) {
-      console.log('Código recebido na URL:', codeFromUrl)
-    }
-  }, [searchParams])
 
   const emailMethods = useForm<EmailFormData>({
     resolver: zodResolver(emailSchema),
@@ -77,9 +69,7 @@ const EmailVerification: NextPage = () => {
       setMessage(result.message || 'E-mail verificado com sucesso!')
       localStorage.setItem('verifiedEmail', email)
       setTimeout(() => {
-        // Redirecionar para user_register passando o código que o usuário digitou
         const redirectUrl = `/user_register?code=${encodeURIComponent(data.code)}`
-        console.log('Redirecionando para user_register com código:', data.code)
         router.push(redirectUrl)
       }, 1500)
     } else {
@@ -95,7 +85,6 @@ const EmailVerification: NextPage = () => {
     setMessage('')
   }
 
-  // Mostrar loading enquanto verifica autenticação
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -112,7 +101,6 @@ const EmailVerification: NextPage = () => {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-lg bg-white p-8 shadow-lg">
-            {/* Header */}
             <div className="mb-8 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
                 <svg
@@ -141,7 +129,6 @@ const EmailVerification: NextPage = () => {
               </p>
             </div>
 
-            {/* Messages */}
             {message && (
               <div className="mb-6 rounded-md border border-green-200 bg-green-50 p-4">
                 <p className="text-green-800">{message}</p>
@@ -154,7 +141,6 @@ const EmailVerification: NextPage = () => {
               </div>
             )}
 
-            {/* Forms */}
             {step === 'email' ? (
               <FormProvider {...emailMethods}>
                 <form
@@ -246,6 +232,23 @@ const EmailVerification: NextPage = () => {
       </div>
       <Footer />
     </>
+  )
+}
+
+const EmailVerificationLoading: React.FC = () => (
+  <div className="flex min-h-screen items-center justify-center">
+    <div className="text-center">
+      <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
+      <p className="text-gray-600">Carregando...</p>
+    </div>
+  </div>
+)
+
+const EmailVerification: NextPage = () => {
+  return (
+    <Suspense fallback={<EmailVerificationLoading />}>
+      <EmailVerificationContent />
+    </Suspense>
   )
 }
 

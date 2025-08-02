@@ -89,6 +89,8 @@ export default function AppointmentsPage() {
   }
 
   const loadAppointments = useCallback(async () => {
+    if (!userId) return
+
     setLoading(true)
 
     try {
@@ -102,13 +104,9 @@ export default function AppointmentsPage() {
 
       setAppointments(appointmentsData)
       setPets(petsResponse?.items || petsResponse?.data || petsResponse || [])
-    } catch (err) {
-      console.error('Erro ao carregar dados:', err)
-      // Se for erro de autenticação, o layout já vai redirecionar
-      if (err instanceof Error && err.message === 'UNAUTHORIZED') {
-        // Deixar o layout/middleware lidar com o redirecionamento
-        return
-      }
+    } catch {
+      setAppointments([])
+      setPets([])
     } finally {
       setLoading(false)
     }
@@ -375,7 +373,6 @@ export default function AppointmentsPage() {
                 </div>
               )}
 
-              {/* Botão de deletar no canto inferior direito */}
               <div className="flex justify-end pt-4">
                 <button
                   onClick={() => handleDeleteAppointment(appointment)}

@@ -7,6 +7,13 @@ import { buildApiUrl } from '@/config/api'
 interface LoginResult {
   error?: string
   success?: boolean
+  userData?: {
+    id: string
+    email: string
+    username: string
+    role: string
+    registrationNumber: string
+  }
 }
 
 export async function loginAction(formData: FormData): Promise<LoginResult> {
@@ -19,81 +26,71 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
 
   const authUrl = buildApiUrl('/v1/users/Authenticate')
 
-  const response = await fetch(
-    `${authUrl}?RegitrationNumber=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+  try {
+    const response = await fetch(
+      `${authUrl}?RegitrationNumber=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       },
-    },
-  )
+    )
 
-  const data = await response.json()
-  console.log('API Response:', data)
-  const token = data.jwt_token || data.token
-  console.log('Token recebido:', token)
-  console.log('Tipo do token:', typeof token)
-  console.log('Comprimento do token:', token ? token.length : 'null/undefined')
+    if (!response.ok) {
+      return { error: 'Credenciais inválidas. Verifique seu usuário e senha.' }
+    }
 
-  if (!token) {
-    console.error('Token não encontrado na resposta da API')
-    return { error: 'Token não encontrado na resposta' }
-  }
+    const data = await response.json()
+    const token = data.jwt_token || data.token
 
-  const cookieStore = await cookies()
+    if (!token) {
+      return { error: 'Credenciais inválidas. Verifique seu usuário e senha.' }
+    }
 
-  cookieStore.set('auth_token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 7,
-    path: '/',
-  })
+    const cookieStore = await cookies()
 
-  // Processar o token JWT
-  const tokenParts = token.split('.')
-  console.log('Número de partes do token:', tokenParts.length)
-  console.log('Partes do token:', tokenParts)
+    cookieStore.set('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    })
 
-  if (tokenParts.length !== 3) {
-    console.warn('Token não parece ser um JWT válido (não tem 3 partes)')
-    console.log('Estrutura do token recebido:', tokenParts)
-    redirect('/user_register')
-  }
+    const tokenParts = token.split('.')
 
-  console.log('Token JWT válido detectado')
-  console.log('Header (parte 1, tokenParts[0])')
-  console.log('Payload (parte 2, tokenParts[1])')
-  console.log('Signature (parte 3, tokenParts[2])')
+    if (tokenParts.length !== 3) {
+      return { error: 'Token inválido. Tente novamente.' }
+    }
 
-  const payload = JSON.parse(atob(tokenParts[1]))
-  console.log('Payload decodificado:', payload)
-  console.log('Chaves do payload:', Object.keys(payload))
+    const payload = JSON.parse(atob(tokenParts[1]))
 
-  const userData = {
-    id: payload.user_id,
-    email: payload.email,
-    username: payload.nameid,
-    role: payload.role,
-    registrationNumber: payload.RegistrationNumber,
-  }
+    const userData = {
+      id: payload.user_id,
+      email: payload.email,
+      username: payload.nameid,
+      role: payload.role,
+      registrationNumber: payload.RegistrationNumber,
+    }
 
-  console.log('Dados do usuário extraídos:', userData)
+    cookieStore.set('user_data', JSON.stringify(userData), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    })
 
-  cookieStore.set('user_data', JSON.stringify(userData), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 7,
-    path: '/',
-  })
-
-  // Redirecionar com base no role do usuário
-  if (userData.role === 'Admin') {
-    redirect('/admin')
-  } else {
-    redirect(`/${userData.id}/home`)
+    // Retornar sucesso com dados do usuário para fazer redirect fora do try/catch
+    return {
+      success: true,
+      error: undefined,
+      userData,
+    }
+  } catch (error) {
+    console.error('Erro durante o login:', error)
+    return { error: 'Erro ao conectar com o servidor. Tente novamente.' }
   }
 }
 

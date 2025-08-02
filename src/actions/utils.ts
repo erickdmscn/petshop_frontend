@@ -43,7 +43,6 @@ export async function authenticatedFetch(
     })
 
     if (response.status === 401) {
-      console.log('Token expirado ou inválido, limpando sessão...')
       const cookieStore = await cookies()
       cookieStore.delete('auth_token')
       cookieStore.delete('user_data')
@@ -82,7 +81,6 @@ export async function requireAuth() {
   }
 }
 
-// Função para buscar dados de endereço pelo CEP
 export const fetchAddressByCEP = async (cep: string) => {
   try {
     const response = await fetch(
@@ -92,8 +90,7 @@ export const fetchAddressByCEP = async (cep: string) => {
       throw new Error('Erro ao buscar dados do CEP')
     }
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar CEP:', error)
-    throw error
+  } catch {
+    throw new Error('Erro ao buscar dados do CEP')
   }
 }

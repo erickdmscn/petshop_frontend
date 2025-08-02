@@ -72,11 +72,10 @@ export default function EditUser({
       toast.success('Tipo de usuário atualizado com sucesso!')
       onSuccess?.()
       onClose()
-    } catch (err) {
+    } catch {
       const errorMsg = 'Erro interno do servidor'
       setError(errorMsg)
       toast.error(errorMsg)
-      console.error('Erro ao atualizar usuário:', err)
     } finally {
       setIsSubmitting(false)
     }

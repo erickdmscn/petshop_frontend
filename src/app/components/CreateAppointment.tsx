@@ -90,8 +90,7 @@ export default function CreateAppointment({
       try {
         const petsData = await getAllPetsAction(1, 50)
         setPets(petsData?.items || [])
-      } catch (err) {
-        console.error('Erro ao carregar pets:', err)
+      } catch {
         setPets([])
       } finally {
         setLoadingPets(false)
@@ -113,8 +112,7 @@ export default function CreateAppointment({
     try {
       const servicesResponse = await getAllServicesAction(1, 50)
       setServices(servicesResponse?.data || [])
-    } catch (err) {
-      console.error('Erro ao carregar serviços:', err)
+    } catch {
     } finally {
       setLoadingServices(false)
     }
@@ -158,8 +156,7 @@ export default function CreateAppointment({
       setModalState('success')
       setIsProcessing(false)
       toast.success('Agendamento criado com sucesso!')
-    } catch (err) {
-      console.error('Erro ao criar agendamento:', err)
+    } catch {
       const errorMsg = 'Erro interno do servidor'
       setError(errorMsg)
       toast.error(errorMsg)
@@ -196,8 +193,7 @@ export default function CreateAppointment({
         onSuccess()
       }
       onClose()
-    } catch (err) {
-      console.error('Erro ao associar serviços:', err)
+    } catch {
       const errorMsg = 'Erro interno do servidor'
       setError(errorMsg)
       toast.error(errorMsg)

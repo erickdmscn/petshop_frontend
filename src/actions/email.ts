@@ -38,8 +38,7 @@ export async function sendEmailAction(email: string): Promise<EmailSendResult> {
         error: errorData.message || 'Erro ao enviar e-mail',
       }
     }
-  } catch (error) {
-    console.error('Erro ao enviar e-mail:', error)
+  } catch {
     return {
       success: false,
       error: 'Erro de conexão. Tente novamente.',
@@ -74,8 +73,7 @@ export async function verifyEmailAction(
         error: errorData.message || 'Código inválido',
       }
     }
-  } catch (error) {
-    console.error('Erro ao verificar e-mail:', error)
+  } catch {
     return {
       success: false,
       error: 'Erro de conexão. Tente novamente.',

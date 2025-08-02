@@ -81,8 +81,7 @@ export default function AdminDashboard() {
         const finalCompanies = companiesData?.items || []
 
         setCompanies(finalCompanies)
-      } catch (error) {
-        console.error('Erro ao buscar companies:', error)
+      } catch {
         setError('Erro ao carregar informações das empresas')
       } finally {
         setCompaniesLoading(false)
@@ -111,8 +110,7 @@ export default function AdminDashboard() {
         setUsers(usersList)
         setTotalRecords(usersData?.totalCount || 0)
         setTotalPages(usersData?.totalPages || 1)
-      } catch (error) {
-        console.error('Erro ao buscar users:', error)
+      } catch {
         setError('Erro ao carregar usuários')
       } finally {
         setUsersLoading(false)
@@ -155,8 +153,7 @@ export default function AdminDashboard() {
       setUsers(usersList)
       setTotalRecords(usersData?.totalCount || 0)
       setTotalPages(usersData?.totalPages || 1)
-    } catch (error) {
-      console.error('Erro ao recarregar usuários:', error)
+    } catch {
       setError('Erro ao recarregar lista de usuários')
     }
   }

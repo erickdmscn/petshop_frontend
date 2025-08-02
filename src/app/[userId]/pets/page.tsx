@@ -23,7 +23,6 @@ export default function PetsPage() {
   const [pets, setPets] = useState<Pet[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Garantir que sempre seja um array válido
   const safePets = Array.isArray(pets) ? pets : []
 
   useEffect(() => {
@@ -35,8 +34,8 @@ export default function PetsPage() {
       try {
         const petsData = await getPetsByUserAction(userId)
         setPets(petsData || [])
-      } catch (err) {
-        console.error('Erro ao carregar pets:', err)
+      } catch {
+        setPets([])
       } finally {
         setLoading(false)
       }
@@ -74,7 +73,12 @@ export default function PetsPage() {
           <div className="rounded-lg border bg-white p-6 text-center shadow-sm md:p-8">
             <div className="mx-auto mb-4 h-12 w-12 text-gray-400">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
               </svg>
             </div>
             <h3 className="mb-2 text-base font-medium text-gray-800 md:text-lg">
@@ -93,8 +97,18 @@ export default function PetsPage() {
               <div className="mb-4 flex items-start justify-between md:mb-6">
                 <div className="flex items-center gap-3 md:gap-6">
                   <div className="rounded-full bg-purple-50 p-2 md:p-4">
-                    <svg className="h-5 w-5 text-purple-600 md:h-8 md:w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    <svg
+                      className="h-5 w-5 text-purple-600 md:h-8 md:w-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
                     </svg>
                   </div>
                   <div>
@@ -102,16 +116,24 @@ export default function PetsPage() {
                       {pet.fullName}
                     </h3>
                     <p className="mb-1 text-sm text-gray-600 md:text-base">
-                      Raça: <span className="font-semibold text-gray-800">{pet.breed}</span>
+                      Raça:{' '}
+                      <span className="font-semibold text-gray-800">
+                        {pet.breed}
+                      </span>
                     </p>
                     <p className="text-sm font-semibold text-purple-600 md:text-base">
-                      Espécie: {pet.species === 1 ? 'Cão' : pet.species === 2 ? 'Gato' : 'Outro'}
+                      Espécie:{' '}
+                      {pet.species === 1
+                        ? 'Cão'
+                        : pet.species === 2
+                          ? 'Gato'
+                          : 'Outro'}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   {pet.needAttention && (
-                    <span className="inline-flex items-center gap-2 rounded-full bg-red-100 px-2 py-1 text-sm font-semibold text-red-800 border border-red-200 md:px-4 md:py-2 md:text-base">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-100 px-2 py-1 text-sm font-semibold text-red-800 md:px-4 md:py-2 md:text-base">
                       Precisa de Atenção
                     </span>
                   )}
@@ -121,40 +143,80 @@ export default function PetsPage() {
               <div className="mb-4 grid grid-cols-1 gap-3 md:mb-6 md:grid-cols-3 md:gap-6">
                 <div className="flex items-center gap-3 text-sm text-gray-700 md:text-base">
                   <div className="rounded-lg bg-gray-100 p-2">
-                    <svg className="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <svg
+                      className="h-4 w-4 md:h-5 md:w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-gray-500 md:text-sm">Idade</p>
+                    <p className="text-xs font-medium text-gray-500 md:text-sm">
+                      Idade
+                    </p>
+                    <p className="font-semibold">{pet.age} anos</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-gray-700 md:text-base">
+                  <div className="rounded-lg bg-gray-100 p-2">
+                    <svg
+                      className="h-4 w-4 md:h-5 md:w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 md:text-sm">
+                      Data de Nascimento
+                    </p>
                     <p className="font-semibold">
-                      {pet.age} anos
+                      {pet.birthDate
+                        ? new Date(pet.birthDate).toLocaleDateString('pt-BR')
+                        : 'N/A'}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-gray-700 md:text-base">
                   <div className="rounded-lg bg-gray-100 p-2">
-                    <svg className="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <svg
+                      className="h-4 w-4 md:h-5 md:w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-gray-500 md:text-sm">Data de Nascimento</p>
-                    <p className="font-semibold">
-                      {pet.birthDate ? new Date(pet.birthDate).toLocaleDateString('pt-BR') : 'N/A'}
+                    <p className="text-xs font-medium text-gray-500 md:text-sm">
+                      Gênero
                     </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-700 md:text-base">
-                  <div className="rounded-lg bg-gray-100 p-2">
-                    <svg className="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 md:text-sm">Gênero</p>
                     <p className="font-semibold">
-                      {pet.gender === 1 ? 'Macho' : pet.gender === 2 ? 'Fêmea' : 'N/A'}
+                      {pet.gender === 1
+                        ? 'Macho'
+                        : pet.gender === 2
+                          ? 'Fêmea'
+                          : 'N/A'}
                     </p>
                   </div>
                 </div>
@@ -165,4 +227,4 @@ export default function PetsPage() {
       </div>
     </>
   )
-} 
+}

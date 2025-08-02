@@ -35,7 +35,6 @@ export async function createPetAction(petData: {
       gender: Number(petData.gender),
       needAttention: Boolean(petData.needAttention),
     }
-    console.log(requestData)
     if (!requestData.fullName || !requestData.species) {
       return { error: 'Nome e espécie são obrigatórios' }
     }
@@ -51,8 +50,8 @@ export async function createPetAction(petData: {
       let errorData: { message?: string } = {}
       try {
         errorData = JSON.parse(errorText)
-      } catch (e) {
-        console.error('Erro ao processar resposta da API:', e)
+      } catch {
+        errorData = { message: errorText }
       }
 
       return {
@@ -66,17 +65,15 @@ export async function createPetAction(petData: {
     if (responseText.trim()) {
       try {
         data = JSON.parse(responseText)
-      } catch (e) {
-        console.error('Erro ao processar resposta da API:', e)
+      } catch {
+        data = null
       }
     }
-    console.log(data)
     revalidatePath('/pets')
     revalidatePath(`/${userData.id}/pets`)
 
     return { success: true, data }
-  } catch (error) {
-    console.error('Erro ao criar pet:', error)
+  } catch {
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -111,8 +108,7 @@ export async function updatePetAction(
     revalidatePath(`/pets/${id}`)
 
     return { success: true, data }
-  } catch (error) {
-    console.error('Erro ao atualizar pet:', error)
+  } catch {
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -129,8 +125,7 @@ export async function deletePetAction(petId: string): Promise<ActionResult> {
 
     revalidatePath('/pets')
     return { success: true }
-  } catch (error) {
-    console.error('Erro ao deletar pet:', error)
+  } catch {
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -145,8 +140,7 @@ export async function getAllPetsAction(
     )
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar pets:', error)
+  } catch {
     throw new Error('Erro ao buscar pets')
   }
 }
@@ -162,9 +156,6 @@ export async function getPetsByUserAction(
     )
 
     if (!response.ok) {
-      console.warn(
-        `API retornou status ${response.status} para pets do usuário ${userId}`,
-      )
       return []
     }
 
@@ -175,11 +166,7 @@ export async function getPetsByUserAction(
     }
 
     return Array.isArray(data) ? data : []
-  } catch (error) {
-    console.error('Erro ao buscar pets do usuário:', error)
-    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
-      throw error // Re-throw para que o componente possa lidar com isso
-    }
+  } catch {
     return []
   }
 }
@@ -193,8 +180,7 @@ export async function getPetByIdAction(petId: number) {
     }
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar pet:', error)
+  } catch {
     throw new Error('Erro ao buscar pet')
   }
 }
@@ -208,8 +194,7 @@ export async function getPetsSpecieAction() {
     }
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar espécies:', error)
+  } catch {
     throw new Error('Erro ao buscar espécies')
   }
 }
@@ -223,8 +208,7 @@ export async function getPetsGenderAction() {
     }
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar gêneros:', error)
+  } catch {
     throw new Error('Erro ao buscar gêneros')
   }
 }
@@ -238,8 +222,7 @@ export async function getPetsNeedAttentionAction() {
     }
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar pets que precisam de atenção:', error)
+  } catch {
     throw new Error('Erro ao buscar pets que precisam de atenção')
   }
 }

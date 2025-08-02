@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -25,7 +25,7 @@ interface Company {
   status: string
 }
 
-export default function UserRegisterPage() {
+const UserRegisterContent: React.FC = () => {
   const { isLoading, userData } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -45,19 +45,9 @@ export default function UserRegisterPage() {
 
   useEffect(() => {
     const codeFromUrl = searchParams.get('code')
-    const emailFromStorage = localStorage.getItem('verifiedEmail')
 
     if (codeFromUrl) {
       setVerificationCode(codeFromUrl)
-      console.log('Código capturado na página user_register:', codeFromUrl)
-    } else {
-      console.log('Nenhum código encontrado na URL')
-    }
-
-    if (emailFromStorage) {
-      console.log('Email capturado do localStorage:', emailFromStorage)
-    } else {
-      console.log('Nenhum email encontrado no localStorage')
     }
   }, [searchParams])
 
@@ -76,10 +66,9 @@ export default function UserRegisterPage() {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const response = await getCompaniesAction(1, 100) // Buscar todas as empresas
+        const response = await getCompaniesAction(1, 100)
         setCompanies(response.items || [])
-      } catch (error) {
-        console.error('Erro ao buscar empresas:', error)
+      } catch {
         setError('Erro ao carregar empresas')
       }
     }
@@ -92,7 +81,6 @@ export default function UserRegisterPage() {
     setError(null)
 
     try {
-      // Pegar email do localStorage
       const emailFromStorage = localStorage.getItem('verifiedEmail')
       if (!emailFromStorage) {
         const errorMsg =
@@ -103,13 +91,12 @@ export default function UserRegisterPage() {
         return
       }
 
-      // Criar FormData para enviar para a action
       const formData = new FormData()
       formData.append('name', data.fullName)
       formData.append('registrationNumber', data.registrationNumber)
       formData.append('userName', data.userName)
       formData.append('companyId', data.companyId.toString())
-      formData.append('email', emailFromStorage) // Usar email do localStorage
+      formData.append('email', emailFromStorage)
       formData.append('password', data.password)
       formData.append('phoneNumber', data.phone)
       formData.append('postalCode', data.postalCode)
@@ -118,7 +105,6 @@ export default function UserRegisterPage() {
       formData.append('state', data.state)
       formData.append('country', data.country)
 
-      // Usar o código capturado da URL
       if (!verificationCode) {
         const errorMsg =
           'Código de verificação não encontrado. Acesse através da verificação de email.'
@@ -142,8 +128,7 @@ export default function UserRegisterPage() {
         setError(errorMsg)
         toast.error(`Erro ao criar usuário: ${errorMsg}`)
       }
-    } catch (error) {
-      console.error('Erro ao criar usuário:', error)
+    } catch {
       const errorMsg = 'Erro interno do servidor'
       setError(errorMsg)
       toast.error(errorMsg)
@@ -152,7 +137,6 @@ export default function UserRegisterPage() {
     }
   }
 
-  // Mostrar loading enquanto verifica autenticação
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -164,7 +148,6 @@ export default function UserRegisterPage() {
     )
   }
 
-  // Só renderizar se for Admin
   if (userData?.role !== 'Admin') {
     return null
   }
@@ -174,7 +157,6 @@ export default function UserRegisterPage() {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-lg bg-white p-8 shadow-lg">
-            {/* Header */}
             <div className="mb-8 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
                 <svg
@@ -199,7 +181,6 @@ export default function UserRegisterPage() {
               </p>
             </div>
 
-            {/* Messages */}
             {error && (
               <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4">
                 <p className="text-red-800">{error}</p>
@@ -215,7 +196,6 @@ export default function UserRegisterPage() {
             )}
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-              {/* Informações Pessoais */}
               <div className="rounded-lg bg-gray-50 p-6">
                 <h2 className="mb-6 text-xl font-semibold text-gray-900">
                   Informações Pessoais
@@ -313,7 +293,6 @@ export default function UserRegisterPage() {
                 </div>
               </div>
 
-              {/* Empresa */}
               <div className="rounded-lg bg-gray-50 p-6">
                 <h2 className="mb-6 text-xl font-semibold text-gray-900">
                   Empresa
@@ -341,7 +320,6 @@ export default function UserRegisterPage() {
                 </div>
               </div>
 
-              {/* Endereço */}
               <div className="rounded-lg bg-gray-50 p-6">
                 <h2 className="mb-6 text-xl font-semibold text-gray-900">
                   Endereço
@@ -438,7 +416,6 @@ export default function UserRegisterPage() {
                 </div>
               </div>
 
-              {/* Botões */}
               <div className="flex gap-4">
                 <button
                   type="button"
@@ -467,5 +444,22 @@ export default function UserRegisterPage() {
         </div>
       </div>
     </>
+  )
+}
+
+const UserRegisterLoading: React.FC = () => (
+  <div className="flex min-h-screen items-center justify-center">
+    <div className="text-center">
+      <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
+      <p className="text-gray-600">Carregando...</p>
+    </div>
+  </div>
+)
+
+export default function UserRegisterPage() {
+  return (
+    <Suspense fallback={<UserRegisterLoading />}>
+      <UserRegisterContent />
+    </Suspense>
   )
 }

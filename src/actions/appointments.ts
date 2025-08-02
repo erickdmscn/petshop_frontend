@@ -48,12 +48,7 @@ export async function createAppointmentOnlyAction(
     try {
       const data = await response.json()
       appointmentId = data.appointmentId || data.id
-    } catch (error) {
-      console.error(
-        'Erro ao processar resposta da criação de agendamento:',
-        error,
-      )
-
+    } catch {
       const locationHeader = response.headers.get('location')
       if (locationHeader) {
         const idMatch = locationHeader.match(/\/(\d+)$/)
@@ -73,8 +68,7 @@ export async function createAppointmentOnlyAction(
       success: true,
       data: { appointmentId },
     }
-  } catch (error) {
-    console.error('Erro ao criar agendamento:', error)
+  } catch {
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -110,7 +104,7 @@ export async function addServicesOnlyAction(
       try {
         errorData = await response.json()
       } catch {
-        console.error('Erro ao processar resposta da API:', Error)
+        errorData = { message: 'Erro ao processar resposta da API' }
       }
 
       return {
@@ -130,8 +124,7 @@ export async function addServicesOnlyAction(
         message: 'Serviços associados com sucesso!',
       },
     }
-  } catch (error) {
-    console.error('Erro ao associar serviços:', error)
+  } catch {
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -152,8 +145,7 @@ export async function addServicesAppointmentAction(
     )
 
     return await addServicesOnlyAction(appointmentId, serviceIds)
-  } catch (error) {
-    console.error('❌ Erro ao processar FormData:', error)
+  } catch {
     return { error: 'Erro ao processar dados do formulário' }
   }
 }
@@ -175,8 +167,7 @@ export async function deleteAppointmentAction(
 
     revalidatePath('/appointments')
     return { success: true }
-  } catch (error) {
-    console.error('Erro ao deletar agendamento:', error)
+  } catch {
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -195,9 +186,6 @@ export async function getAppointmentServicesAction(
     const response = await authenticatedFetch(url)
 
     if (!response.ok) {
-      console.warn(
-        `API retornou status ${response.status} para serviços de appointment`,
-      )
       return {
         data: [],
         totalCount: 0,
@@ -231,8 +219,7 @@ export async function getAppointmentServicesAction(
     }
 
     return result
-  } catch (error) {
-    console.error('Erro ao buscar serviços de appointment:', error)
+  } catch {
     return {
       data: [],
       totalCount: 0,
@@ -254,8 +241,7 @@ export async function getAppointmentByIdAction(appointmentId: number) {
     }
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar agendamento:', error)
+  } catch {
     throw new Error('Erro ao buscar agendamento')
   }
 }
@@ -267,9 +253,6 @@ export async function getAppointmentsByUserAction(userId: number) {
     )
 
     if (!response.ok) {
-      console.warn(
-        `API retornou status ${response.status} para agendamentos do usuário ${userId}`,
-      )
       return []
     }
 
@@ -284,11 +267,7 @@ export async function getAppointmentsByUserAction(userId: number) {
     }
 
     return []
-  } catch (error) {
-    console.error('Erro ao buscar agendamentos:', error)
-    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
-      throw error
-    }
+  } catch {
     return []
   }
 }
@@ -304,8 +283,7 @@ export async function getAppointmentsByPetAction(petId: number) {
     }
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar agendamentos do pet:', error)
+  } catch {
     throw new Error('Erro ao buscar agendamentos do pet')
   }
 }
@@ -323,8 +301,7 @@ export async function getAppointmentsByStatusAction(status?: string) {
     }
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar agendamentos por status:', error)
+  } catch {
     throw new Error('Erro ao buscar agendamentos por status')
   }
 }

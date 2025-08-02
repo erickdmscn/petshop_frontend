@@ -54,7 +54,6 @@ const ResetPassword: NextPage = () => {
 
       methods.reset()
     } catch (error) {
-      console.error('Erro ao enviar solicitação:', error)
       setSubmitStatus({
         success: false,
         message:
@@ -85,7 +84,6 @@ const ResetPassword: NextPage = () => {
             </div>
           </div>
 
-          {/* Lado do Formulário */}
           <div className="flex h-full w-full flex-col items-center justify-center p-10 md:w-1/2">
             <div className="w-full max-w-md">
               <h2 className="text-center font-poppins text-4xl font-bold text-green-700">

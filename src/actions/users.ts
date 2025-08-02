@@ -90,8 +90,7 @@ export async function createUserAction(
     revalidatePath('/users')
 
     return { success: true, data }
-  } catch (error) {
-    console.error('Erro ao criar usuário:', error)
+  } catch {
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -105,8 +104,7 @@ export async function getAllUsersAction() {
     }
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar usuários:', error)
+  } catch {
     throw new Error('Erro ao buscar usuários')
   }
 }
@@ -122,8 +120,7 @@ export async function getUsersAction(pageIndex = 1, pageSize = 10) {
     }
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar usuários:', error)
+  } catch {
     throw new Error('Erro ao buscar usuários')
   }
 }
@@ -137,8 +134,7 @@ export async function getUserByIdAction(userId: number) {
     }
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar usuário:', error)
+  } catch {
     throw new Error('Erro ao buscar usuário')
   }
 }
@@ -154,8 +150,7 @@ export async function getUserByRegistrationAction(registrationNumber: string) {
     }
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar usuário:', error)
+  } catch {
     throw new Error('Erro ao buscar usuário')
   }
 }
@@ -171,8 +166,7 @@ export async function getUserByEmailAction(email: string) {
     }
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar usuário por email:', error)
+  } catch {
     throw new Error('Erro ao buscar usuário')
   }
 }
@@ -188,8 +182,7 @@ export async function getUserByPhoneAction(phoneNumber: string) {
     }
 
     return await response.json()
-  } catch (error) {
-    console.error('Erro ao buscar usuário por telefone:', error)
+  } catch {
     throw new Error('Erro ao buscar usuário')
   }
 }
@@ -206,8 +199,7 @@ export async function deleteUserAction(userId: string): Promise<ActionResult> {
 
     revalidatePath('/login')
     return { success: true }
-  } catch (error) {
-    console.error('Erro ao deletar usuário:', error)
+  } catch {
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -239,8 +231,7 @@ export async function updateUserPatchAction(
     revalidatePath(`/users/${userId}`)
 
     return { success: true, data }
-  } catch (error) {
-    console.error('Erro ao atualizar usuário:', error)
+  } catch {
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -273,8 +264,7 @@ export async function updateUserWithCodeAction(
     revalidatePath(`/users/${userId}`)
 
     return { success: true, data }
-  } catch (error) {
-    console.error('Erro ao atualizar usuário:', error)
+  } catch {
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -333,10 +323,7 @@ export async function updateUserTypeAction(
 
     revalidatePath('/admin')
     return { success: true, data: responseData }
-  } catch (error) {
-    console.error('Erro ao atualizar tipo de usuário:', error)
-    return {
-      error: `Erro interno: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
-    }
+  } catch {
+    return { error: 'Erro interno do servidor' }
   }
 }

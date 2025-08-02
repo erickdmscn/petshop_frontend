@@ -1,19 +1,26 @@
 'use client'
 import { Loader } from 'lucide-react'
-import Link from 'next/link'
 import Image from 'next/image'
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { useFormStatus } from 'react-dom'
-import { loginAction } from '@/actions'
-import InputForm from '../components/InputForm'
 import { useForm, FormProvider } from 'react-hook-form'
-import Footer from '../components/Footer'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { loginSchema, type LoginFormData } from '../schemas/loginSchema'
+import { loginAction } from '@/actions'
+import InputForm from '../components/InputForm'
+import Footer from '../components/Footer'
+import toast from 'react-hot-toast'
 
 interface LoginState {
   error?: string
   success?: boolean
+  userData?: {
+    id: string
+    email: string
+    username: string
+    role: string
+    registrationNumber: string
+  }
 }
 
 function SubmitButton() {
@@ -50,6 +57,22 @@ export default function Login() {
       password: '',
     },
   })
+
+  useEffect(() => {
+    if (state?.error) {
+      toast.error(state.error)
+    }
+  }, [state?.error])
+
+  useEffect(() => {
+    if (state?.success && state?.userData) {
+      if (state.userData.role === 'Admin') {
+        window.location.href = '/admin'
+      } else {
+        window.location.href = `/${state.userData.id}/home`
+      }
+    }
+  }, [state?.success, state?.userData])
 
   return (
     <>
@@ -91,21 +114,7 @@ export default function Login() {
                     type="password"
                   />
 
-                  {state?.error && (
-                    <p className="text-center text-red-500">{state.error}</p>
-                  )}
-
                   <SubmitButton />
-
-                  <p className="mt-6 text-center text-sm text-gray-600">
-                    Esqueceu sua senha?{' '}
-                    <Link
-                      href="/reset_password"
-                      className="font-semibold text-blue-600"
-                    >
-                      Recuperar
-                    </Link>
-                  </p>
                 </form>
               </FormProvider>
             </div>

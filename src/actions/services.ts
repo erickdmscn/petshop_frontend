@@ -43,7 +43,7 @@ export async function createServiceAction(
         try {
           data = JSON.parse(text)
         } catch {
-          console.warn('Resposta não é JSON válido:', text)
+          data = null
         }
       }
     }
@@ -51,8 +51,7 @@ export async function createServiceAction(
     revalidatePath('/services')
 
     return { success: true, data }
-  } catch (error) {
-    console.error('Erro ao criar serviço:', error)
+  } catch {
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -88,7 +87,7 @@ export async function updateServiceAction(
         try {
           data = JSON.parse(text)
         } catch {
-          console.warn('Resposta não é JSON válido:', text)
+          data = null
         }
       }
     }
@@ -97,8 +96,7 @@ export async function updateServiceAction(
     revalidatePath(`/services/${id}`)
 
     return { success: true, data }
-  } catch (error) {
-    console.error('Erro ao atualizar serviço:', error)
+  } catch {
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -117,8 +115,7 @@ export async function deleteServiceAction(
 
     revalidatePath('/services')
     return { success: true }
-  } catch (error) {
-    console.error('Erro ao deletar serviço:', error)
+  } catch {
     return { error: 'Erro interno do servidor' }
   }
 }
@@ -137,7 +134,6 @@ export async function getAllServicesAction(
     const response = await authenticatedFetch(url)
 
     if (!response.ok) {
-      console.warn(`API retornou status ${response.status} para serviços`)
       return {
         data: [],
         totalCount: 0,
@@ -179,8 +175,7 @@ export async function getAllServicesAction(
     }
 
     return result
-  } catch (error) {
-    console.error('Erro ao buscar serviços:', error)
+  } catch {
     return {
       data: [],
       totalCount: 0,
@@ -207,8 +202,7 @@ export async function getServiceByIdAction(serviceId: number) {
       ...service,
       description: service.descripton || null,
     }
-  } catch (error) {
-    console.error('Erro ao buscar serviço:', error)
+  } catch {
     throw new Error('Erro ao buscar serviço')
   }
 }
@@ -235,8 +229,7 @@ export async function getServicesByNameAction(name: string) {
     }
 
     return mapService(services)
-  } catch (error) {
-    console.error('Erro ao buscar serviços por nome:', error)
+  } catch {
     throw new Error('Erro ao buscar serviços')
   }
 }

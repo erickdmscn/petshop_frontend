@@ -13,7 +13,6 @@ export default function UserLayout({ children }: UserLayoutProps) {
   const router = useRouter()
   const { isAuthenticated, isLoading, userData, error } = useAuth(true)
 
-  // Verificar se o userId na URL corresponde ao usuário logado
   if (isAuthenticated && userData?.id) {
     const urlUserId = Number(params.userId)
     if (userData.id !== urlUserId.toString()) {
@@ -34,7 +33,7 @@ export default function UserLayout({ children }: UserLayoutProps) {
   }
 
   if (error || !isAuthenticated || !userData) {
-    return null // O useAuth já redireciona para /unauthorized
+    return null
   }
 
   return (

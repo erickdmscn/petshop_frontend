@@ -45,7 +45,6 @@ export default function PetServicesPage() {
     name: string
   } | null>(null)
 
-  // Garantir que sempre seja um array válido
   const safeServices = servicesData?.data || services || []
 
   const loadServices = async () => {
@@ -55,15 +54,14 @@ export default function PetServicesPage() {
       const servicesResponse = await getAllServicesAction(1, 50)
       setServicesData(servicesResponse)
       setServices(servicesResponse?.data || [])
-    } catch (err) {
-      console.error('Erro ao carregar serviços:', err)
+    } catch {
+      setServices([])
     } finally {
       setLoading(false)
     }
   }
 
   const handleEditService = (service: Service) => {
-    // Converter description null para string vazia para compatibilidade com EditService
     const serviceForEdit = {
       ...service,
       description: service.description || '',
@@ -274,7 +272,6 @@ export default function PetServicesPage() {
                 </div>
               </div>
 
-              {/* Botões de editar e deletar no canto inferior direito */}
               <div className="flex justify-end gap-2 pt-4">
                 <button
                   onClick={() => handleEditService(service)}

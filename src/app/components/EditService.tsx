@@ -78,11 +78,10 @@ export default function EditService({
       toast.success('Serviço atualizado com sucesso!')
       onSuccess?.()
       onClose()
-    } catch (err) {
+    } catch {
       const errorMsg = 'Erro interno do servidor'
       setError(errorMsg)
       toast.error(errorMsg)
-      console.error('Erro ao atualizar serviço:', err)
     } finally {
       setIsSubmitting(false)
     }

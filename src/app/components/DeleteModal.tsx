@@ -43,15 +43,13 @@ export default function DeleteModal({
         return
       }
 
-      // Sucesso
       toast.success(successMessage)
       onSuccess?.()
       onClose()
-    } catch (err) {
+    } catch {
       const errorMsg = 'Erro interno do servidor'
       setError(errorMsg)
       toast.error(errorMsg)
-      console.error('Erro ao deletar:', err)
     } finally {
       setIsDeleting(false)
     }

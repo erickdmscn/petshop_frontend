@@ -14,11 +14,11 @@ export enum PaymentStatus {
 }
 
 export enum PaymentMethod {
-  NONE = 1,
-  CASH = 2,
-  CREDIT_CARD = 3,
-  DEBIT_CARD = 4,
-  PIX = 5,
+  NONE = 0,
+  CASH = 1,
+  CREDIT_CARD = 2,
+  DEBIT_CARD = 3,
+  PIX = 4,
 }
 
 export const appointmentSchema = z.object({
@@ -28,7 +28,7 @@ export const appointmentSchema = z.object({
   statusAppointments: z.coerce.number().min(1).max(4),
   totalPrice: z.coerce.number().min(0, 'Preço deve ser positivo'),
   paymentStatus: z.coerce.number().min(1).max(3),
-  paymentMethod: z.coerce.number().min(1).max(5),
+  paymentMethod: z.coerce.number().min(0).max(4),
   notes: z.string().optional(),
 })
 

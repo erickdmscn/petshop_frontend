@@ -10,7 +10,7 @@ import {
   Activity,
   Trash2,
 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import CreateAppointment from '../../components/CreateAppointment'
 import CreatePet from '../../components/CreatePet'
@@ -90,7 +90,7 @@ export default function Home() {
   const safePets = Array.isArray(pets) ? pets : []
   const safeServices = servicesData?.data || services || []
 
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     if (!userId) return
 
     setLoading(true)
@@ -105,24 +105,26 @@ export default function Home() {
       const servicesResponse = await getAllServicesAction(1, 50)
       setServicesData(servicesResponse)
       setServices(servicesResponse?.data || [])
-    } catch (err) {
-      console.error('Erro ao carregar dados:', err)
+    } catch {
+      setAppointments([])
+      setPets([])
+      setServices([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId])
 
   useEffect(() => {
     loadUserData()
-  }, [userId])
+  }, [loadUserData])
 
   const reloadServices = async () => {
     try {
       const servicesResponse = await getAllServicesAction(1, 50)
       setServicesData(servicesResponse)
       setServices(servicesResponse?.data || [])
-    } catch (err) {
-      console.error('Erro ao recarregar serviços:', err)
+    } catch {
+      setServices([])
     }
   }
 

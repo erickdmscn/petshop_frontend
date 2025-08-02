@@ -47,12 +47,7 @@ export function useAuth(requireAuth: boolean = true) {
           userData,
           error: null,
         })
-      } catch (error) {
-        console.error('Erro ao verificar autenticação:', error)
-
-        const errorMessage =
-          error instanceof Error ? error.message : 'Erro de autenticação'
-
+      } catch {
         if (requireAuth) {
           router.replace('/unauthorized')
           return
@@ -62,7 +57,7 @@ export function useAuth(requireAuth: boolean = true) {
           isAuthenticated: false,
           isLoading: false,
           userData: null,
-          error: errorMessage,
+          error: 'Erro de autenticação',
         })
       }
     }
