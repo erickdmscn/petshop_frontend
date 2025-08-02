@@ -5,7 +5,6 @@ import React, { useState, Suspense } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import InputForm from '../components/InputForm'
-import Footer from '../components/Footer'
 import { useRouter } from 'next/navigation'
 import {
   emailSchema,
@@ -230,7 +229,6 @@ const EmailVerificationContent: React.FC = () => {
           </div>
         </div>
       </div>
-      <Footer />
     </>
   )
 }
