@@ -60,7 +60,7 @@ export default function CreateService({
         }
         onClose()
       }
-    } catch (err) {
+    } catch {
       const errorMsg = 'Erro inesperado ao criar serviço'
       setError(errorMsg)
       toast.error(errorMsg)

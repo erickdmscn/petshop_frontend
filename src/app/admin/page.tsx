@@ -165,10 +165,10 @@ export default function AdminDashboard() {
 
   if (isLoading || companiesLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
-          <p className="text-gray-600">Carregando...</p>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Carregando...</p>
         </div>
       </div>
     )

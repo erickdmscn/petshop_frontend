@@ -38,7 +38,7 @@ const InputForm: React.FC<InputProps> = ({
         step={step}
         placeholder={placeholder}
         disabled={disabled}
-        className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
         onFocus={onFocus}
         {...register(name)}
       />
