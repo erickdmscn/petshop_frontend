@@ -25,7 +25,6 @@ export const appointmentSchema = z.object({
   userId: z.number().nullable().default(null),
   petId: z.coerce.number().min(1, 'Selecione um pet'),
   appointmentDate: z.string().min(1, 'Data obrigatória'),
-  statusAppointments: z.coerce.number().min(1).max(4),
   totalPrice: z.coerce.number().min(0, 'Preço deve ser positivo'),
   paymentStatus: z.coerce.number().min(1).max(3),
   paymentMethod: z.coerce.number().min(0).max(4),

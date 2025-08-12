@@ -376,22 +376,26 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleEditUser(user)}
-                                className="rounded-md p-1 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-900"
-                                title="Editar tipo de usuário"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteUser(user)}
-                                className="rounded-md p-1 text-red-600 transition-colors hover:bg-red-50 hover:text-red-900"
-                                title="Deletar usuário"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
+                            {user.userType !== 'Admin' ? (
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => handleEditUser(user)}
+                                  className="rounded-md p-1 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-900"
+                                  title="Editar tipo de usuário"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(user)}
+                                  className="rounded-md p-1 text-red-600 transition-colors hover:bg-red-50 hover:text-red-900"
+                                  title="Deletar usuário"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-400">-</span>
+                            )}
                           </td>
                         </tr>
                       ))}

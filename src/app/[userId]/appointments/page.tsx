@@ -2,14 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { Plus, Trash2, DollarSign } from 'lucide-react'
+import { Plus, Trash2, DollarSign, Filter, Search } from 'lucide-react'
 import {
   getAppointmentServicesAction,
   deleteAppointmentAction,
 } from '@/actions/appointments'
 import { getAllPetsAction } from '@/actions/pets'
+import { StatusAppointments } from '@/app/schemas/appointmentSchema'
 import CreateAppointment from '../../components/CreateAppointment'
 import DeleteModal from '../../components/DeleteModal'
+import FilterModal from '../../components/FilterModal'
 
 interface AppointmentService {
   serviceId: number
@@ -57,14 +59,6 @@ const PaymentMethod = {
   5: 'PIX',
 } as const
 
-const AppointmentStatus = {
-  1: 'Agendado',
-  2: 'Confirmado',
-  3: 'Em andamento',
-  4: 'Concluído',
-  5: 'Cancelado',
-} as const
-
 export default function AppointmentsPage() {
   const params = useParams()
   const userId = Number(params.userId)
@@ -80,6 +74,45 @@ export default function AppointmentsPage() {
       petName: string
       appointmentDate: string
     } | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showFilter, setShowFilter] = useState(false)
+  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({})
+
+  const appointmentFilters = [
+    {
+      key: 'status',
+      label: 'Status do Agendamento',
+      type: 'select' as const,
+      options: [
+        {
+          value: StatusAppointments.IN_PROGRESS.toString(),
+          label: 'Em andamento',
+        },
+        { value: StatusAppointments.COMPLETED.toString(), label: 'Concluído' },
+        { value: StatusAppointments.CANCELED.toString(), label: 'Cancelado' },
+      ],
+    },
+    {
+      key: 'paymentStatus',
+      label: 'Status do Pagamento',
+      type: 'select' as const,
+      options: [
+        { value: '1', label: 'Pendente' },
+        { value: '2', label: 'Pago' },
+        { value: '3', label: 'Cancelado' },
+      ],
+    },
+    {
+      key: 'dateRange',
+      label: 'Período',
+      type: 'dateRange' as const,
+    },
+  ]
+
+  const handleApplyFilters = (filters: Record<string, any>) => {
+    setActiveFilters(filters)
+    // Aqui você pode implementar a lógica de filtragem
+  }
 
   const safeAppointments = appointments || []
 
@@ -87,6 +120,53 @@ export default function AppointmentsPage() {
     const pet = pets.find((p) => p.petsId === petId)
     return pet ? pet.fullName : `Pet ${petId}`
   }
+
+  // Filtrar appointments baseado no termo de busca e filtros ativos
+  const filteredAppointments = safeAppointments.filter((appointment) => {
+    // Filtro por nome do pet
+    const petName = getPetName(appointment.petId).toLowerCase()
+    if (!petName.includes(searchTerm.toLowerCase())) {
+      return false
+    }
+
+    // Filtro por status do agendamento
+    if (
+      activeFilters.status &&
+      appointment.statusAppointments.toString() !== activeFilters.status
+    ) {
+      return false
+    }
+
+    // Filtro por status do pagamento
+    if (
+      activeFilters.paymentStatus &&
+      appointment.paymentStatus.toString() !== activeFilters.paymentStatus
+    ) {
+      return false
+    }
+
+    // Filtro por período
+    if (activeFilters.dateRange) {
+      const appointmentDate = new Date(appointment.appointmentDate)
+
+      if (activeFilters.dateRange.start) {
+        const startDate = new Date(activeFilters.dateRange.start)
+        if (appointmentDate < startDate) {
+          return false
+        }
+      }
+
+      if (activeFilters.dateRange.end) {
+        const endDate = new Date(activeFilters.dateRange.end)
+        endDate.setHours(23, 59, 59) // Incluir todo o dia final
+        if (appointmentDate > endDate) {
+          return false
+        }
+      }
+    }
+
+    return true
+  })
 
   const loadAppointments = useCallback(async () => {
     if (!userId) return
@@ -143,22 +223,51 @@ export default function AppointmentsPage() {
 
   return (
     <>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="mb-1 text-2xl font-bold text-gray-800 md:text-3xl">
-            Agendamentos
-          </h1>
-          <p className="text-sm text-gray-600 md:text-base">
-            Gerencie os agendamentos de seus pets.
-          </p>
+      {/* Cabeçalho reorganizado */}
+      <div className="mb-6">
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="mb-1 text-2xl font-bold text-gray-800 md:text-3xl">
+                Agendamentos
+              </h1>
+              <p className="text-sm text-gray-600 md:text-base">
+                Gerencie todos os agendamentos do seu petshop
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowCreateAppointment(true)}
+            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 md:px-6 md:py-3 md:text-base"
+          >
+            <Plus className="h-4 w-4 md:h-5 md:w-5" />
+            Novo Agendamento
+          </button>
         </div>
-        <button
-          onClick={() => setShowCreateAppointment(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 md:px-6 md:py-3 md:text-base"
-        >
-          <Plus className="h-4 w-4 md:h-5 md:w-5" />
-          Novo Agendamento
-        </button>
+
+        {/* Barra de busca e filtro */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <button
+            onClick={() => setShowFilter(!showFilter)}
+            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            <Filter className="h-4 w-4" />
+            Filtrar
+          </button>
+
+          <div className="relative max-w-md flex-1">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <Search className="h-4 w-4 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="mb-6 rounded-xl border bg-white p-4 shadow-sm md:p-6">
@@ -172,7 +281,7 @@ export default function AppointmentsPage() {
             </h3>
             <p className="text-2xl font-bold text-gray-800 md:text-3xl">
               R${' '}
-              {safeAppointments
+              {filteredAppointments
                 .reduce(
                   (sum, appointment) => sum + (appointment?.totalPrice || 0),
                   0,
@@ -180,15 +289,15 @@ export default function AppointmentsPage() {
                 .toFixed(2)}
             </p>
             <p className="text-sm text-gray-500">
-              {safeAppointments.length} agendamento
-              {safeAppointments.length !== 1 ? 's' : ''}
+              {filteredAppointments.length} agendamento
+              {filteredAppointments.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
       </div>
 
       <div className="space-y-4">
-        {safeAppointments.length === 0 ? (
+        {filteredAppointments.length === 0 ? (
           <div className="rounded-lg border bg-white p-6 text-center shadow-sm md:p-8">
             <div className="mx-auto mb-4 h-12 w-12 text-gray-400">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -201,14 +310,18 @@ export default function AppointmentsPage() {
               </svg>
             </div>
             <h3 className="mb-2 text-base font-medium text-gray-800 md:text-lg">
-              Nenhum agendamento encontrado
+              {searchTerm
+                ? 'Nenhum agendamento encontrado para a busca'
+                : 'Nenhum agendamento encontrado'}
             </h3>
             <p className="text-sm text-gray-600 md:text-base">
-              Você ainda não possui agendamentos cadastrados.
+              {searchTerm
+                ? 'Tente buscar por outro nome de pet.'
+                : 'Você ainda não possui agendamentos cadastrados.'}
             </p>
           </div>
         ) : (
-          safeAppointments.map((appointment, index) => (
+          filteredAppointments.map((appointment, index) => (
             <div
               key={appointment.appointmentId || index}
               className="rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-md md:p-8"
@@ -237,18 +350,28 @@ export default function AppointmentsPage() {
                       </h3>
                       <span
                         className={`whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium md:px-3 md:text-sm ${
-                          appointment.statusAppointments === 2
-                            ? 'bg-green-100 text-green-800'
-                            : appointment.statusAppointments === 4
+                          appointment.statusAppointments ===
+                          StatusAppointments.SCHEDULED
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : appointment.statusAppointments ===
+                                StatusAppointments.IN_PROGRESS
                               ? 'bg-blue-100 text-blue-800'
-                              : appointment.statusAppointments === 5
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-yellow-100 text-yellow-800'
+                              : appointment.statusAppointments ===
+                                  StatusAppointments.COMPLETED
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {AppointmentStatus[
-                          appointment.statusAppointments as keyof typeof AppointmentStatus
-                        ] || 'Desconhecido'}
+                        {appointment.statusAppointments ===
+                        StatusAppointments.SCHEDULED
+                          ? 'Agendado'
+                          : appointment.statusAppointments ===
+                              StatusAppointments.IN_PROGRESS
+                            ? 'Em Andamento'
+                            : appointment.statusAppointments ===
+                                StatusAppointments.COMPLETED
+                              ? 'Concluído'
+                              : 'Cancelado'}
                       </span>
                     </div>
                     {appointment.notes && (
@@ -423,6 +546,15 @@ export default function AppointmentsPage() {
           successMessage={`Agendamento do pet "${selectedAppointmentForDelete.petName}" deletado com sucesso!`}
         />
       )}
+
+      <FilterModal
+        isOpen={showFilter}
+        onClose={() => setShowFilter(false)}
+        onApply={handleApplyFilters}
+        filters={appointmentFilters}
+        title="Filtrar Agendamentos"
+        initialValues={activeFilters}
+      />
     </>
   )
 }

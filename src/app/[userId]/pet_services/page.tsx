@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Edit2, Trash2, Filter, Search } from 'lucide-react'
 import { deleteServiceAction, getAllServicesAction } from '@/actions/services'
 import CreateService from '../../components/CreateService'
 import EditService from '../../components/EditService'
 import DeleteModal from '../../components/DeleteModal'
+import FilterModal from '../../components/FilterModal'
 
 interface Service {
   serviceId: number
@@ -44,8 +45,94 @@ export default function PetServicesPage() {
     serviceId: number
     name: string
   } | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showFilter, setShowFilter] = useState(false)
+  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({})
+
+  const serviceFilters = [
+    {
+      key: 'priceRange',
+      label: 'Faixa de Preço',
+      type: 'select' as const,
+      options: [
+        { value: '0-50', label: 'Até R$ 50' },
+        { value: '50-100', label: 'R$ 50 - R$ 100' },
+        { value: '100-200', label: 'R$ 100 - R$ 200' },
+        { value: '200+', label: 'Acima de R$ 200' },
+      ],
+    },
+    {
+      key: 'duration',
+      label: 'Duração',
+      type: 'select' as const,
+      options: [
+        { value: '0-30', label: 'Até 30 min' },
+        { value: '30-60', label: '30 - 60 min' },
+        { value: '60-120', label: '1 - 2 horas' },
+        { value: '120+', label: 'Mais de 2 horas' },
+      ],
+    },
+    {
+      key: 'isActive',
+      label: 'Status',
+      type: 'checkbox' as const,
+      placeholder: 'Mostrar apenas serviços ativos',
+    },
+  ]
+
+  const handleApplyFilters = (filters: Record<string, any>) => {
+    setActiveFilters(filters)
+    // Aqui você pode implementar a lógica de filtragem
+  }
 
   const safeServices = servicesData?.data || services || []
+
+  // Filtrar services baseado no termo de busca e filtros ativos
+  const filteredServices = safeServices.filter((service) => {
+    // Filtro por nome do serviço
+    if (!service.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false
+    }
+
+    // Filtro por faixa de preço
+    if (activeFilters.priceRange) {
+      const [min, max] = activeFilters.priceRange.split('-').map(Number)
+      if (max) {
+        if (service.price < min || service.price > max) {
+          return false
+        }
+      } else {
+        // Caso seja "200+" por exemplo
+        if (service.price < min) {
+          return false
+        }
+      }
+    }
+
+    // Filtro por duração
+    if (activeFilters.duration) {
+      const [min, max] = activeFilters.duration.split('-').map(Number)
+      if (max) {
+        if (service.duration < min || service.duration > max) {
+          return false
+        }
+      } else {
+        // Caso seja "120+" por exemplo
+        if (service.duration < min) {
+          return false
+        }
+      }
+    }
+
+    // Filtro por status (ativo/inativo)
+    if (activeFilters.isActive) {
+      if (service.isActive === false) {
+        return false
+      }
+    }
+
+    return true
+  })
 
   const loadServices = async () => {
     setLoading(true)
@@ -105,26 +192,55 @@ export default function PetServicesPage() {
 
   return (
     <>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="mb-1 text-2xl font-bold text-gray-800 md:text-3xl">
-            Serviços
-          </h1>
-          <p className="text-sm text-gray-600 md:text-base">
-            Gerencie os serviços oferecidos pelo seu petshop
-          </p>
+      {/* Cabeçalho reorganizado */}
+      <div className="mb-6">
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="mb-1 text-2xl font-bold text-gray-800 md:text-3xl">
+                Serviços
+              </h1>
+              <p className="text-sm text-gray-600 md:text-base">
+                Gerencie todos os serviços do seu petshop
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowCreateService(true)}
+            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 md:px-6 md:py-3 md:text-base"
+          >
+            <Plus className="h-4 w-4 md:h-5 md:w-5" />
+            Novo Serviço
+          </button>
         </div>
-        <button
-          onClick={() => setShowCreateService(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 md:px-6 md:py-3 md:text-base"
-        >
-          <Plus className="h-4 w-4 md:h-5 md:w-5" />
-          Novo Serviço
-        </button>
+
+        {/* Barra de busca e filtro */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <button
+            onClick={() => setShowFilter(!showFilter)}
+            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            <Filter className="h-4 w-4" />
+            Filtrar
+          </button>
+
+          <div className="relative max-w-md flex-1">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <Search className="h-4 w-4 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="space-y-4">
-        {safeServices.length === 0 ? (
+        {filteredServices.length === 0 ? (
           <div className="rounded-lg border bg-white p-6 text-center shadow-sm md:p-8">
             <div className="mx-auto mb-4 h-12 w-12 text-gray-400">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,14 +259,18 @@ export default function PetServicesPage() {
               </svg>
             </div>
             <h3 className="mb-2 text-base font-medium text-gray-800 md:text-lg">
-              Nenhum serviço encontrado
+              {searchTerm
+                ? 'Nenhum serviço encontrado para a busca'
+                : 'Nenhum serviço encontrado'}
             </h3>
             <p className="text-sm text-gray-600 md:text-base">
-              Não há serviços disponíveis no momento.
+              {searchTerm
+                ? 'Tente buscar por outro nome de serviço.'
+                : 'Não há serviços disponíveis no momento.'}
             </p>
           </div>
         ) : (
-          safeServices.map((service, index) => (
+          filteredServices.map((service, index) => (
             <div
               key={index}
               className={`rounded-xl border bg-white p-4 shadow-sm transition-all hover:shadow-md md:p-8 ${
@@ -330,6 +450,15 @@ export default function PetServicesPage() {
           successMessage="Serviço deletado com sucesso"
         />
       )}
+
+      <FilterModal
+        isOpen={showFilter}
+        onClose={() => setShowFilter(false)}
+        onApply={handleApplyFilters}
+        filters={serviceFilters}
+        title="Filtrar Serviços"
+        initialValues={activeFilters}
+      />
     </>
   )
 }

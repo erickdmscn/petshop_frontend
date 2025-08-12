@@ -8,7 +8,6 @@ import toast from 'react-hot-toast'
 import {
   appointmentSchema,
   type AppointmentFormData,
-  StatusAppointments,
   PaymentStatus,
   PaymentMethod,
 } from '../schemas/appointmentSchema'
@@ -74,7 +73,6 @@ export default function CreateAppointment({
       userId,
       petId: 0,
       appointmentDate: '',
-      statusAppointments: StatusAppointments.SCHEDULED,
       totalPrice: 0,
       paymentStatus: PaymentStatus.PENDING,
       paymentMethod: PaymentMethod.CASH,
@@ -127,7 +125,6 @@ export default function CreateAppointment({
       formData.append('userId', userId.toString())
       formData.append('petId', data.petId.toString())
       formData.append('appointmentDate', data.appointmentDate)
-      formData.append('statusAppointments', data.statusAppointments.toString())
       formData.append('totalPrice', data.totalPrice.toString())
       formData.append('paymentStatus', data.paymentStatus.toString())
       formData.append('paymentMethod', data.paymentMethod.toString())
@@ -285,39 +282,6 @@ export default function CreateAppointment({
                     type="date"
                     placeholder=""
                   />
-
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="statusAppointments"
-                      className="block text-gray-700"
-                    >
-                      Status do Agendamento{' '}
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="statusAppointments"
-                      {...methods.register('statusAppointments')}
-                      className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
-                    >
-                      <option value={StatusAppointments.SCHEDULED}>
-                        Agendado
-                      </option>
-                      <option value={StatusAppointments.IN_PROGRESS}>
-                        Em Andamento
-                      </option>
-                      <option value={StatusAppointments.COMPLETED}>
-                        Concluído
-                      </option>
-                      <option value={StatusAppointments.CANCELED}>
-                        Cancelado
-                      </option>
-                    </select>
-                    {methods.formState.errors.statusAppointments && (
-                      <p className="text-sm text-red-500">
-                        {methods.formState.errors.statusAppointments.message}
-                      </p>
-                    )}
-                  </div>
 
                   <InputForm
                     label="Preço Total (R$)"

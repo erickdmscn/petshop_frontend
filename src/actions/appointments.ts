@@ -17,7 +17,6 @@ export async function createAppointmentOnlyAction(
       userId: Number(formData.get('userId')),
       petId: Number(formData.get('petId')),
       appointmentDate: formData.get('appointmentDate') as string,
-      statusAppointments: Number(formData.get('statusAppointments')),
       totalPrice: Number(formData.get('totalPrice')),
       paymentStatus: Number(formData.get('paymentStatus')),
       paymentMethod: Number(formData.get('paymentMethod')),
