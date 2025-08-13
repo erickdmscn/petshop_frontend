@@ -14,6 +14,7 @@ import {
 } from '../schemas/emailVerificationSchema'
 import { sendEmailAction, verifyEmailAction } from '@/actions/email'
 import { useAuth } from '@/hooks/useAuth'
+import toast from 'react-hot-toast'
 
 const EmailVerificationContent: React.FC = () => {
   const { isLoading: authLoading } = useAuth()
@@ -22,7 +23,6 @@ const EmailVerificationContent: React.FC = () => {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
 
   const emailMethods = useForm<EmailFormData>({
     resolver: zodResolver(emailSchema),
@@ -41,7 +41,6 @@ const EmailVerificationContent: React.FC = () => {
 
   const handleSendEmail = async (data: EmailFormData) => {
     setIsLoading(true)
-    setError('')
     setMessage('')
 
     const result = await sendEmailAction(data.email)
@@ -51,7 +50,7 @@ const EmailVerificationContent: React.FC = () => {
       setStep('code')
       setMessage(result.message || 'Código enviado para seu e-mail!')
     } else {
-      setError(result.error || 'Erro ao enviar e-mail')
+      toast.error('Erro ao enviar e-mail. Tente novamente.')
     }
 
     setIsLoading(false)
@@ -59,7 +58,6 @@ const EmailVerificationContent: React.FC = () => {
 
   const handleVerifyCode = async (data: CodeFormData) => {
     setIsLoading(true)
-    setError('')
     setMessage('')
 
     const result = await verifyEmailAction(email, data.code)
@@ -72,7 +70,7 @@ const EmailVerificationContent: React.FC = () => {
         router.push(redirectUrl)
       }, 1500)
     } else {
-      setError(result.error || 'Código inválido')
+      toast.error('Código incorreto. Verifique e tente novamente.')
     }
 
     setIsLoading(false)
@@ -80,7 +78,6 @@ const EmailVerificationContent: React.FC = () => {
 
   const handleBack = () => {
     setStep('email')
-    setError('')
     setMessage('')
   }
 
@@ -131,12 +128,6 @@ const EmailVerificationContent: React.FC = () => {
             {message && (
               <div className="mb-6 rounded-md border border-green-200 bg-green-50 p-4">
                 <p className="text-green-800">{message}</p>
-              </div>
-            )}
-
-            {error && (
-              <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4">
-                <p className="text-red-800">{error}</p>
               </div>
             )}
 
