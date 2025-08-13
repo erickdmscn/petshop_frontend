@@ -115,6 +115,12 @@ export default function Login() {
                   />
 
                   <SubmitButton />
+
+                  <div className="mt-4 text-center">
+                    <span className="cursor-pointer text-sm text-green-600 transition-colors hover:text-green-700 hover:underline">
+                      Esqueceu sua senha?
+                    </span>
+                  </div>
                 </form>
               </FormProvider>
             </div>
