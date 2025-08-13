@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { authenticatedFetch } from './utils'
+import { ENDPOINTS } from '@/config/api'
 
 interface ActionResult {
   error?: string
@@ -30,13 +31,10 @@ export async function createAppointmentOnlyAction(
       return { error: 'Usuário, pet e data são obrigatórios' }
     }
 
-    const response = await authenticatedFetch(
-      '/v1/appointment/CreateAppointment',
-      {
-        method: 'POST',
-        body: JSON.stringify(appointmentData),
-      },
-    )
+    const response = await authenticatedFetch(ENDPOINTS.APPOINTMENTS_CREATE, {
+      method: 'POST',
+      body: JSON.stringify(appointmentData),
+    })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
@@ -91,7 +89,7 @@ export async function addServicesOnlyAction(
       return { error: `Agendamento ${appointmentId} não encontrado` }
     }
 
-    const endpoint = `/v1/appointment/AddServicesAppointments?aptId=${appointmentId}`
+    const endpoint = `${ENDPOINTS.APPOINTMENTS_ADD_SERVICES}?aptId=${appointmentId}`
 
     const response = await authenticatedFetch(endpoint, {
       method: 'PATCH',
@@ -154,7 +152,7 @@ export async function deleteAppointmentAction(
 ): Promise<ActionResult> {
   try {
     const response = await authenticatedFetch(
-      `/v1/appointment/${appointmentId}`,
+      `${ENDPOINTS.APPOINTMENTS}/${appointmentId}`,
       {
         method: 'DELETE',
       },
@@ -181,7 +179,7 @@ export async function getAppointmentServicesAction(
       pageSize: pageSize.toString(),
     })
 
-    const url = `/v1/appointment/GetAllServices?${params.toString()}`
+    const url = `${ENDPOINTS.APPOINTMENTS_GET_ALL_SERVICES}?${params.toString()}`
     const response = await authenticatedFetch(url)
 
     if (!response.ok) {
@@ -232,7 +230,7 @@ export async function getAppointmentServicesAction(
 export async function getAppointmentByIdAction(appointmentId: number) {
   try {
     const response = await authenticatedFetch(
-      `/v1/appointment/GetAppointmentById/${appointmentId}`,
+      `${ENDPOINTS.APPOINTMENTS_GET_BY_ID}/${appointmentId}`,
     )
 
     if (!response.ok) {
@@ -248,7 +246,7 @@ export async function getAppointmentByIdAction(appointmentId: number) {
 export async function getAppointmentsByUserAction(userId: number) {
   try {
     const response = await authenticatedFetch(
-      `/v1/appointment/GetAppointmentByUser/${userId}`,
+      `${ENDPOINTS.APPOINTMENTS_GET_BY_USER}/${userId}`,
     )
 
     if (!response.ok) {
@@ -274,7 +272,7 @@ export async function getAppointmentsByUserAction(userId: number) {
 export async function getAppointmentsByPetAction(petId: number) {
   try {
     const response = await authenticatedFetch(
-      `/v1/appointment/GetAppointmentByPet/${petId}`,
+      `${ENDPOINTS.APPOINTMENTS_GET_BY_PET}/${petId}`,
     )
 
     if (!response.ok) {
@@ -290,8 +288,8 @@ export async function getAppointmentsByPetAction(petId: number) {
 export async function getAppointmentsByStatusAction(status?: string) {
   try {
     const url = status
-      ? `/v1/appointment/GetAppointmentByStatus?status=${encodeURIComponent(status)}`
-      : '/v1/appointment/GetAppointmentByStatus'
+      ? `${ENDPOINTS.APPOINTMENTS_GET_BY_STATUS}?status=${encodeURIComponent(status)}`
+      : ENDPOINTS.APPOINTMENTS_GET_BY_STATUS
 
     const response = await authenticatedFetch(url)
 

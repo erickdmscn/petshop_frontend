@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { buildApiUrl } from '@/config/api'
+import { buildApiUrl, ENDPOINTS } from '@/config/api'
 
 interface LoginResult {
   error?: string
@@ -24,7 +24,7 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
     return { error: 'Usuário e senha são obrigatórios' }
   }
 
-  const authUrl = buildApiUrl('/v1/users/Authenticate')
+  const authUrl = buildApiUrl(ENDPOINTS.AUTH)
 
   try {
     const response = await fetch(
@@ -82,7 +82,6 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
       path: '/',
     })
 
-    // Retornar sucesso com dados do usuário para fazer redirect fora do try/catch
     return {
       success: true,
       error: undefined,

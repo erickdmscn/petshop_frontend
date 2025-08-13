@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { authenticatedFetch, getAuthToken } from './utils'
+import { ENDPOINTS } from '@/config/api'
 
 interface ActionResult {
   error?: string
@@ -41,7 +42,7 @@ export async function createUserAction(
       }
     }
 
-    const url = `/v1/users/CreateUser?code=${encodeURIComponent(code)}`
+    const url = `${ENDPOINTS.USERS_CREATE}?code=${encodeURIComponent(code)}`
 
     const response = await authenticatedFetch(url, {
       method: 'POST',
@@ -49,7 +50,6 @@ export async function createUserAction(
     })
 
     if (!response.ok) {
-      // Clonar a resposta para poder ler o corpo múltiplas vezes
       const responseClone = response.clone()
       let errorData: any = {}
       let responseText = ''
@@ -59,9 +59,7 @@ export async function createUserAction(
       } catch {
         try {
           responseText = await response.text()
-        } catch {
-          // Ignorar erro de leitura do texto
-        }
+        } catch {}
       }
 
       const errorMessage =
@@ -73,7 +71,6 @@ export async function createUserAction(
       return { error: errorMessage }
     }
 
-    // Verificar se a resposta tem conteúdo antes de tentar fazer parse do JSON
     const contentLength = response.headers.get('content-length')
     const hasContent = contentLength && parseInt(contentLength) > 0
 
@@ -82,7 +79,6 @@ export async function createUserAction(
       try {
         data = await response.json()
       } catch {
-        // Se não conseguir fazer parse do JSON, mas o status é 200, ainda é sucesso
         data = null
       }
     }
@@ -97,7 +93,7 @@ export async function createUserAction(
 
 export async function getAllUsersAction() {
   try {
-    const response = await authenticatedFetch('/v1/users')
+    const response = await authenticatedFetch(ENDPOINTS.USERS)
 
     if (!response.ok) {
       throw new Error('Erro ao buscar usuários')
@@ -112,7 +108,7 @@ export async function getAllUsersAction() {
 export async function getUsersAction(pageIndex = 1, pageSize = 10) {
   try {
     const response = await authenticatedFetch(
-      `/v1/users?pageIndex=${pageIndex}&pageSize=${pageSize}`,
+      `${ENDPOINTS.USERS}?pageIndex=${pageIndex}&pageSize=${pageSize}`,
     )
 
     if (!response.ok) {
@@ -127,7 +123,9 @@ export async function getUsersAction(pageIndex = 1, pageSize = 10) {
 
 export async function getUserByIdAction(userId: number) {
   try {
-    const response = await authenticatedFetch(`/v1/users/GetById/${userId}`)
+    const response = await authenticatedFetch(
+      `${ENDPOINTS.USERS_GET_BY_ID}/${userId}`,
+    )
 
     if (!response.ok) {
       throw new Error('Usuário não encontrado')
@@ -142,7 +140,7 @@ export async function getUserByIdAction(userId: number) {
 export async function getUserByRegistrationAction(registrationNumber: string) {
   try {
     const response = await authenticatedFetch(
-      `/v1/users/GetByRegistrationNumber/${registrationNumber}`,
+      `${ENDPOINTS.USERS_GET_BY_REGISTRATION}/${registrationNumber}`,
     )
 
     if (!response.ok) {
@@ -158,7 +156,7 @@ export async function getUserByRegistrationAction(registrationNumber: string) {
 export async function getUserByEmailAction(email: string) {
   try {
     const response = await authenticatedFetch(
-      `/v1/users/GetByEmail/${encodeURIComponent(email)}`,
+      `${ENDPOINTS.USERS_GET_BY_EMAIL}/${encodeURIComponent(email)}`,
     )
 
     if (!response.ok) {
@@ -174,7 +172,7 @@ export async function getUserByEmailAction(email: string) {
 export async function getUserByPhoneAction(phoneNumber: string) {
   try {
     const response = await authenticatedFetch(
-      `/v1/users/GetByPhoneNumber/${encodeURIComponent(phoneNumber)}`,
+      `${ENDPOINTS.USERS_GET_BY_PHONE}/${encodeURIComponent(phoneNumber)}`,
     )
 
     if (!response.ok) {
@@ -189,7 +187,7 @@ export async function getUserByPhoneAction(phoneNumber: string) {
 
 export async function deleteUserAction(userId: string): Promise<ActionResult> {
   try {
-    const response = await authenticatedFetch(`/v1/users/${userId}`, {
+    const response = await authenticatedFetch(`${ENDPOINTS.USERS}/${userId}`, {
       method: 'DELETE',
     })
 
@@ -216,7 +214,7 @@ export async function updateUserPatchAction(
       role: formData.get('role') as string,
     }
 
-    const response = await authenticatedFetch(`/v1/users/${userId}`, {
+    const response = await authenticatedFetch(`${ENDPOINTS.USERS}/${userId}`, {
       method: 'PATCH',
       body: JSON.stringify(userData),
     })
@@ -249,10 +247,13 @@ export async function updateUserWithCodeAction(
       role: formData.get('role') as string,
     }
 
-    const response = await authenticatedFetch(`/v1/users/${code}/${userId}`, {
-      method: 'PUT',
-      body: JSON.stringify(userData),
-    })
+    const response = await authenticatedFetch(
+      `${ENDPOINTS.USERS}/${code}/${userId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(userData),
+      },
+    )
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))

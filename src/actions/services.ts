@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { authenticatedFetch } from './utils'
+import { ENDPOINTS } from '@/config/api'
 
 interface ActionResult {
   error?: string
@@ -24,7 +25,7 @@ export async function createServiceAction(
       return { error: 'Nome e preço são obrigatórios' }
     }
 
-    const response = await authenticatedFetch('/v1/services/CreateService', {
+    const response = await authenticatedFetch(ENDPOINTS.SERVICES_CREATE, {
       method: 'POST',
       body: JSON.stringify(serviceData),
     })
@@ -68,7 +69,7 @@ export async function updateServiceAction(
       duration: Number(formData.get('duration')),
     }
 
-    const response = await authenticatedFetch(`/v1/services/${id}`, {
+    const response = await authenticatedFetch(`${ENDPOINTS.SERVICES}/${id}`, {
       method: 'PUT',
       body: JSON.stringify(serviceData),
     })
@@ -105,9 +106,12 @@ export async function deleteServiceAction(
   serviceId: string,
 ): Promise<ActionResult> {
   try {
-    const response = await authenticatedFetch(`/v1/services/${serviceId}`, {
-      method: 'DELETE',
-    })
+    const response = await authenticatedFetch(
+      `${ENDPOINTS.SERVICES}/${serviceId}`,
+      {
+        method: 'DELETE',
+      },
+    )
 
     if (!response.ok) {
       return { error: 'Erro ao deletar serviço' }
@@ -130,7 +134,7 @@ export async function getAllServicesAction(
       pageSize: pageSize.toString(),
     })
 
-    const url = `/v1/services/GetAllServices?${params.toString()}`
+    const url = `${ENDPOINTS.SERVICES_GET_ALL}?${params.toString()}`
     const response = await authenticatedFetch(url)
 
     if (!response.ok) {
@@ -189,7 +193,7 @@ export async function getAllServicesAction(
 export async function getServiceByIdAction(serviceId: number) {
   try {
     const response = await authenticatedFetch(
-      `/v1/services/GetServicesById/${serviceId}`,
+      `${ENDPOINTS.SERVICES_GET_BY_ID}/${serviceId}`,
     )
 
     if (!response.ok) {
@@ -210,7 +214,7 @@ export async function getServiceByIdAction(serviceId: number) {
 export async function getServicesByNameAction(name: string) {
   try {
     const response = await authenticatedFetch(
-      `/v1/services/GetServicesByName/${encodeURIComponent(name)}`,
+      `${ENDPOINTS.SERVICES_GET_BY_NAME}/${encodeURIComponent(name)}`,
     )
 
     if (!response.ok) {

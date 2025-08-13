@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { authenticatedFetch } from './utils'
+import { ENDPOINTS } from '@/config/api'
 
 interface ActionResult {
   error?: string
@@ -16,7 +17,7 @@ function cleanRegistrationNumber(value: string): string {
 export async function getCompaniesAction(pageIndex = 1, pageSize = 10) {
   try {
     const response = await authenticatedFetch(
-      `/v1/companies?pageIndex=${pageIndex}&pageSize=${pageSize}`,
+      `${ENDPOINTS.COMPANIES}?pageIndex=${pageIndex}&pageSize=${pageSize}`,
     )
 
     if (!response.ok) {
@@ -65,7 +66,7 @@ export async function createCompanyAction(
       postalCode: companyData.postalCode || '',
     }
 
-    const response = await authenticatedFetch('/v1/companies', {
+    const response = await authenticatedFetch(ENDPOINTS.COMPANIES, {
       method: 'POST',
       body: sanitizedData as any,
     })
@@ -100,7 +101,7 @@ export async function createCompanyAction(
 
 export async function getCompanyByIdAction(id: number) {
   try {
-    const response = await authenticatedFetch(`/v1/companies/${id}`)
+    const response = await authenticatedFetch(`${ENDPOINTS.COMPANIES}/${id}`)
 
     if (!response.ok) {
       throw new Error('Empresa não encontrada')
@@ -145,7 +146,7 @@ export async function updateCompanyAction(
       postalCode: companyData.postalCode || '',
     }
 
-    const response = await authenticatedFetch(`/v1/companies/${id}`, {
+    const response = await authenticatedFetch(`${ENDPOINTS.COMPANIES}/${id}`, {
       method: 'PUT',
       body: sanitizedData as any,
     })
@@ -169,9 +170,12 @@ export async function deleteCompanyAction(
   companyId: string,
 ): Promise<ActionResult> {
   try {
-    const response = await authenticatedFetch(`/v1/companies/${companyId}`, {
-      method: 'DELETE',
-    })
+    const response = await authenticatedFetch(
+      `${ENDPOINTS.COMPANIES}/${companyId}`,
+      {
+        method: 'DELETE',
+      },
+    )
 
     if (!response.ok) {
       return { error: 'Erro ao deletar empresa' }
@@ -187,7 +191,9 @@ export async function deleteCompanyAction(
 export async function getCompanyByCnpjAction(cnpj: string) {
   try {
     const cleanCnpj = cleanRegistrationNumber(cnpj)
-    const response = await authenticatedFetch(`/v1/companies/cnpj/${cleanCnpj}`)
+    const response = await authenticatedFetch(
+      `${ENDPOINTS.COMPANIES_BY_CNPJ}/${cleanCnpj}`,
+    )
 
     if (!response.ok) {
       throw new Error('Empresa não encontrada')

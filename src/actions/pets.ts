@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { authenticatedFetch, getUserData } from './utils'
+import { ENDPOINTS } from '@/config/api'
 
 interface ActionResult {
   error?: string
@@ -39,7 +40,7 @@ export async function createPetAction(petData: {
       return { error: 'Nome e espécie são obrigatórios' }
     }
 
-    const response = await authenticatedFetch('/v1/pets/CreatePet', {
+    const response = await authenticatedFetch(ENDPOINTS.PETS_CREATE, {
       method: 'POST',
       body: JSON.stringify(requestData),
     })
@@ -93,7 +94,7 @@ export async function updatePetAction(
       gender: formData.get('gender') as string,
     }
 
-    const response = await authenticatedFetch(`/v1/pets/${id}`, {
+    const response = await authenticatedFetch(`${ENDPOINTS.PETS}/${id}`, {
       method: 'PUT',
       body: JSON.stringify(petData),
     })
@@ -115,7 +116,7 @@ export async function updatePetAction(
 
 export async function deletePetAction(petId: string): Promise<ActionResult> {
   try {
-    const response = await authenticatedFetch(`/v1/pets/${petId}`, {
+    const response = await authenticatedFetch(`${ENDPOINTS.PETS}/${petId}`, {
       method: 'DELETE',
     })
 
@@ -136,7 +137,7 @@ export async function getAllPetsAction(
 ) {
   try {
     const response = await authenticatedFetch(
-      `/v1/pets/GetAllPets?pageIndex=${pageIndex}&pageSize=${pageSize}`,
+      `${ENDPOINTS.PETS_GET_ALL}?pageIndex=${pageIndex}&pageSize=${pageSize}`,
     )
 
     return await response.json()
@@ -152,7 +153,7 @@ export async function getPetsByUserAction(
 ) {
   try {
     const response = await authenticatedFetch(
-      `/v1/pets/GetPetsByUser/${userId}?pageIndex=${pageIndex}&pageSize=${pageSize}`,
+      `${ENDPOINTS.PETS_GET_BY_USER}/${userId}?pageIndex=${pageIndex}&pageSize=${pageSize}`,
     )
 
     if (!response.ok) {
@@ -173,7 +174,9 @@ export async function getPetsByUserAction(
 
 export async function getPetByIdAction(petId: number) {
   try {
-    const response = await authenticatedFetch(`/v1/pets/GetPetsById/${petId}`)
+    const response = await authenticatedFetch(
+      `${ENDPOINTS.PETS_GET_BY_ID}/${petId}`,
+    )
 
     if (!response.ok) {
       throw new Error('Pet não encontrado')
@@ -187,7 +190,7 @@ export async function getPetByIdAction(petId: number) {
 
 export async function getPetsSpecieAction() {
   try {
-    const response = await authenticatedFetch('/v1/pets/GetPetsSpecie')
+    const response = await authenticatedFetch(ENDPOINTS.PETS_GET_SPECIES)
 
     if (!response.ok) {
       throw new Error('Erro ao buscar espécies')
@@ -201,7 +204,7 @@ export async function getPetsSpecieAction() {
 
 export async function getPetsGenderAction() {
   try {
-    const response = await authenticatedFetch('/v1/pets/GetPetsGender')
+    const response = await authenticatedFetch(ENDPOINTS.PETS_GET_GENDERS)
 
     if (!response.ok) {
       throw new Error('Erro ao buscar gêneros')
@@ -215,7 +218,7 @@ export async function getPetsGenderAction() {
 
 export async function getPetsNeedAttentionAction() {
   try {
-    const response = await authenticatedFetch('/v1/pets/GetPetsNeedAttention')
+    const response = await authenticatedFetch(ENDPOINTS.PETS_GET_NEED_ATTENTION)
 
     if (!response.ok) {
       throw new Error('Erro ao buscar pets que precisam de atenção')
