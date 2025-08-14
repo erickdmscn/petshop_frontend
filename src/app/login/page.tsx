@@ -14,13 +14,6 @@ import toast from 'react-hot-toast'
 interface LoginState {
   error?: string
   success?: boolean
-  userData?: {
-    id: string
-    email: string
-    username: string
-    role: string
-    registrationNumber: string
-  }
 }
 
 function SubmitButton() {
@@ -65,14 +58,32 @@ export default function Login() {
   }, [state?.error])
 
   useEffect(() => {
-    if (state?.success && state?.userData) {
-      if (state.userData.role === 'Admin') {
-        window.location.href = '/admin'
-      } else {
-        window.location.href = `/${state.userData.id}/home`
+    if (state?.success) {
+      const cookies = document.cookie.split(';')
+      const userDataCookie = cookies.find((c) =>
+        c.trim().startsWith('client_user_data='),
+      )
+
+      if (userDataCookie) {
+        try {
+          const cookieValue = userDataCookie.split('=')[1]
+          const userData = JSON.parse(decodeURIComponent(cookieValue))
+
+          if (userData.role === 'Admin') {
+            window.location.href = '/admin'
+          } else {
+            window.location.href = `/${userData.id}/home`
+          }
+        } catch (error) {
+          console.error(
+            'Erro ao ler dados do usuário para redirecionamento:',
+            error,
+          )
+          window.location.href = '/unauthorized'
+        }
       }
     }
-  }, [state?.success, state?.userData])
+  }, [state?.success])
 
   return (
     <>

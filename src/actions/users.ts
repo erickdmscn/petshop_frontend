@@ -294,6 +294,7 @@ export async function updateUserTypeAction(
       const cookieStore = await import('next/headers').then((m) => m.cookies())
       ;(await cookieStore).delete('auth_token')
       ;(await cookieStore).delete('user_data')
+      ;(await cookieStore).delete('client_user_data')
       return { error: 'Sessão expirada. Faça login novamente.' }
     }
 

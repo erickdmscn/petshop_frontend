@@ -46,6 +46,7 @@ export async function authenticatedFetch(
       const cookieStore = await cookies()
       cookieStore.delete('auth_token')
       cookieStore.delete('user_data')
+      cookieStore.delete('client_user_data')
 
       throw new Error('UNAUTHORIZED')
     }

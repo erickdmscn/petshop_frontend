@@ -7,13 +7,6 @@ import { buildApiUrl, ENDPOINTS } from '@/config/api'
 interface LoginResult {
   error?: string
   success?: boolean
-  userData?: {
-    id: string
-    email: string
-    username: string
-    role: string
-    registrationNumber: string
-  }
 }
 
 export async function loginAction(formData: FormData): Promise<LoginResult> {
@@ -82,10 +75,22 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
       path: '/',
     })
 
+    const clientUserData = {
+      id: userData.id,
+      role: userData.role,
+    }
+
+    cookieStore.set('client_user_data', JSON.stringify(clientUserData), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    })
+
     return {
       success: true,
       error: undefined,
-      userData,
     }
   } catch (error) {
     console.error('Erro durante o login:', error)
@@ -97,6 +102,7 @@ export async function logoutAction() {
   const cookieStore = await cookies()
   cookieStore.delete('auth_token')
   cookieStore.delete('user_data')
+  cookieStore.delete('client_user_data')
   redirect('/login')
 }
 
