@@ -77,7 +77,10 @@ export default function EditService({
 
       toast.success('Serviço atualizado com sucesso!')
       onSuccess?.()
-      onClose()
+      // Delay para permitir que revalidatePath termine antes de fechar o modal
+      setTimeout(() => {
+        onClose()
+      }, 300)
     } catch {
       const errorMsg = 'Erro interno do servidor'
       setError(errorMsg)

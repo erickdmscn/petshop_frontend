@@ -94,7 +94,6 @@ export async function updateServiceAction(
     }
 
     revalidatePath('/services')
-    revalidatePath(`/services/${id}`)
 
     return { success: true, data }
   } catch {

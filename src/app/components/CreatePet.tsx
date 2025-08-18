@@ -62,8 +62,11 @@ export default function CreatePet({ isOpen, onClose }: CreatePetProps) {
       if (result.success) {
         methods.reset()
         toast.success('Pet cadastrado com sucesso!')
-        onClose()
-        window.location.reload()
+        // Delay para permitir que revalidatePath termine antes de fechar o modal
+        setTimeout(() => {
+          onClose()
+          window.location.reload()
+        }, 300)
       }
     } catch (err) {
       const errorMsg = `Erro interno do servidor: ${err instanceof Error ? err.message : 'Erro desconhecido'}`

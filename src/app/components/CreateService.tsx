@@ -39,7 +39,6 @@ export default function CreateService({
     setError(null)
 
     try {
-      // Criar FormData para enviar para a action
       const formData = new FormData()
       formData.append('name', data.name)
       formData.append('description', data.description)
@@ -52,13 +51,14 @@ export default function CreateService({
         setError(result.error)
         toast.error(`Erro ao criar serviço: ${result.error}`)
       } else {
-        // Sucesso - resetar form e fechar modal
         methods.reset()
         toast.success('Serviço criado com sucesso!')
         if (onSuccess) {
           onSuccess()
         }
-        onClose()
+        setTimeout(() => {
+          onClose()
+        }, 300)
       }
     } catch {
       const errorMsg = 'Erro inesperado ao criar serviço'
