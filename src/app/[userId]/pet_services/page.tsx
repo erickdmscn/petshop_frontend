@@ -207,7 +207,7 @@ export default function PetServicesPage() {
           </div>
           <button
             onClick={() => setShowCreateService(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 md:px-6 md:py-3 md:text-base"
+            className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-800 md:px-6 md:py-3 md:text-base"
           >
             <Plus className="h-4 w-4 md:h-5 md:w-5" />
             Novo Serviço
@@ -258,11 +258,11 @@ export default function PetServicesPage() {
                 />
               </svg>
             </div>
-            <h3 className="mb-2 text-base font-medium text-gray-800 md:text-lg">
+            <h2 className="mb-2 text-base font-medium text-gray-800 md:text-lg">
               {searchTerm
                 ? 'Nenhum serviço encontrado para a busca'
                 : 'Nenhum serviço encontrado'}
-            </h3>
+            </h2>
             <p className="text-sm text-gray-600 md:text-base">
               {searchTerm
                 ? 'Tente buscar por outro nome de serviço.'
@@ -304,9 +304,9 @@ export default function PetServicesPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex flex-wrap items-center gap-2 md:mb-2">
-                      <h3 className="truncate text-base font-bold text-gray-800 md:text-xl">
+                      <h2 className="truncate text-base font-bold text-gray-800 md:text-xl">
                         {service.name}
-                      </h3>
+                      </h2>
                       {service.isActive === false && (
                         <span className="whitespace-nowrap rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800 md:px-3 md:text-sm">
                           Inativo
@@ -405,7 +405,7 @@ export default function PetServicesPage() {
                 </button>
                 <button
                   onClick={() => handleDeleteService(service)}
-                  className="flex items-center gap-1 rounded-lg bg-red-50 px-2 py-1 text-red-600 transition-colors hover:bg-red-100 md:gap-2 md:px-3 md:py-2"
+                  className="flex items-center gap-1 rounded-lg bg-red-50 px-2 py-1 text-red-700 transition-colors hover:bg-red-100 md:gap-2 md:px-3 md:py-2"
                   title="Deletar serviço"
                 >
                   <Trash2 className="h-3 w-3 md:h-4 md:w-4" />

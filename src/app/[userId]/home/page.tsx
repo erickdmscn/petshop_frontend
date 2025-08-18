@@ -290,7 +290,7 @@ export default function Home() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <button
                 onClick={() => setShowCreateAppointment(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-800"
               >
                 <Plus className="h-4 w-4" />
                 Cadastrar Agendamento
@@ -310,7 +310,7 @@ export default function Home() {
               <p className="text-gray-500">Nenhum agendamento encontrado</p>
               <button
                 onClick={() => setShowCreateAppointment(true)}
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
               >
                 <Plus className="h-4 w-4" />
                 Cadastrar Agendamento
@@ -378,7 +378,7 @@ export default function Home() {
                           </div>
                         </td>
                         <td className="py-4 text-right">
-                          <span className="font-semibold text-emerald-600">
+                          <span className="font-semibold text-emerald-700">
                             R$ {appointment.totalPrice.toFixed(2)}
                           </span>
                         </td>
@@ -408,7 +408,7 @@ export default function Home() {
                         </span>
                       </div>
                       <div className="text-right">
-                        <span className="font-semibold text-emerald-600">
+                        <span className="font-semibold text-emerald-700">
                           R$ {appointment.totalPrice.toFixed(2)}
                         </span>
                       </div>
@@ -541,7 +541,7 @@ export default function Home() {
           </h3>
           <button
             onClick={() => setShowCreateService(true)}
-            className="text-xs font-medium text-orange-600 hover:text-orange-700 md:text-sm"
+            className="text-xs font-medium text-orange-700 hover:text-orange-800 md:text-sm"
           >
             Adicionar
           </button>
@@ -561,7 +561,7 @@ export default function Home() {
               >
                 <div className="mb-3 flex items-center justify-between">
                   <h4 className="font-medium text-gray-800">{service.name}</h4>
-                  <span className="text-sm font-medium text-orange-600">
+                  <span className="text-sm font-medium text-orange-700">
                     R$ {service.price ? service.price.toFixed(2) : '0.00'}
                   </span>
                 </div>

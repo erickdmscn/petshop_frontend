@@ -16,7 +16,7 @@ export async function getAuthToken() {
 
 export async function authenticatedFetch(
   endpoint: string,
-  options: RequestInit & { body?: BodyInit | any } = {},
+  options: RequestInit = {},
 ) {
   try {
     const token = await getAuthToken()

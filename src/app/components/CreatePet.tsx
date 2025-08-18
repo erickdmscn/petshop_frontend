@@ -86,6 +86,8 @@ export default function CreatePet({ isOpen, onClose }: CreatePetProps) {
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
+            aria-label="Fechar modal"
+            title="Fechar"
           >
             <XCircle className="h-5 w-5 md:h-6 md:w-6" />
           </button>
@@ -189,7 +191,7 @@ export default function CreatePet({ isOpen, onClose }: CreatePetProps) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:bg-emerald-400 md:py-3 md:text-base"
+                className="flex-1 rounded-lg bg-emerald-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 disabled:bg-emerald-400 md:py-3 md:text-base"
               >
                 {isLoading ? 'Cadastrando...' : 'Cadastrar Pet'}
               </button>

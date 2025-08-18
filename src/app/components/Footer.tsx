@@ -4,7 +4,7 @@ const Footer = () => {
       <div className="container mx-auto px-6 py-12">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           <div className="space-y-4">
-            <h3 className="mb-4 text-xl font-bold text-white">Sobre Nós</h3>
+            <h2 className="mb-4 text-xl font-bold text-white">Sobre Nós</h2>
             <p className="max-w-md leading-relaxed text-gray-300">
               Somos uma plataforma dedicada ao cuidado e bem-estar dos seus
               pets. Oferecemos serviços de qualidade para garantir a melhor
@@ -13,7 +13,7 @@ const Footer = () => {
           </div>
 
           <div className="space-y-4">
-            <h3 className="mb-4 text-xl font-bold text-white">Contato</h3>
+            <h2 className="mb-4 text-xl font-bold text-white">Contato</h2>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <span className="text-gray-300">authomatize2025@gmail.com</span>

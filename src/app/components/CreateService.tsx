@@ -79,6 +79,8 @@ export default function CreateService({
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
+            aria-label="Fechar modal"
+            title="Fechar"
           >
             <XCircle className="h-6 w-6" />
           </button>
@@ -132,7 +134,7 @@ export default function CreateService({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 rounded-lg bg-emerald-600 py-2 text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400"
+                className="flex-1 rounded-lg bg-emerald-700 py-2 text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400"
               >
                 {isLoading ? 'Criando...' : 'Criar Serviço'}
               </button>

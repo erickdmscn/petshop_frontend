@@ -83,24 +83,24 @@ const EmailVerificationContent: React.FC = () => {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <main className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
           <p className="text-gray-600">Verificando permissões...</p>
         </div>
-      </div>
+      </main>
     )
   }
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 py-8">
+      <main className="min-h-screen bg-gray-50 py-8">
         <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-lg bg-white p-8 shadow-lg">
-            <div className="mb-8 text-center">
+          <section className="rounded-lg bg-white p-8 shadow-lg">
+            <header className="mb-8 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
                 <svg
-                  className="h-8 w-8 text-emerald-600"
+                  className="h-8 w-8 text-emerald-700"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -123,7 +123,7 @@ const EmailVerificationContent: React.FC = () => {
                   ? 'Digite seu e-mail para receber o código de verificação'
                   : 'Digite o código enviado para seu e-mail'}
               </p>
-            </div>
+            </header>
 
             {message && (
               <div className="mb-6 rounded-md border border-green-200 bg-green-50 p-4">
@@ -152,7 +152,7 @@ const EmailVerificationContent: React.FC = () => {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full rounded-md bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-md bg-emerald-700 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isLoading ? (
                       <div className="flex items-center justify-center">
@@ -202,7 +202,7 @@ const EmailVerificationContent: React.FC = () => {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="flex-1 rounded-md bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex-1 rounded-md bg-emerald-700 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {isLoading ? (
                         <div className="flex items-center justify-center">
@@ -217,20 +217,20 @@ const EmailVerificationContent: React.FC = () => {
                 </form>
               </FormProvider>
             )}
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
     </>
   )
 }
 
 const EmailVerificationLoading: React.FC = () => (
-  <div className="flex min-h-screen items-center justify-center">
+  <main className="flex min-h-screen items-center justify-center">
     <div className="text-center">
       <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
       <p className="text-gray-600">Carregando...</p>
     </div>
-  </div>
+  </main>
 )
 
 const EmailVerification: NextPage = () => {

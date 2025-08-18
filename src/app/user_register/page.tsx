@@ -139,12 +139,12 @@ const UserRegisterContent: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <main className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
           <p className="text-gray-600">Verificando permissões...</p>
         </div>
-      </div>
+      </main>
     )
   }
 
@@ -154,13 +154,13 @@ const UserRegisterContent: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 py-8">
+      <main className="min-h-screen bg-gray-50 py-8">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-lg bg-white p-8 shadow-lg">
-            <div className="mb-8 text-center">
+          <section className="rounded-lg bg-white p-8 shadow-lg">
+            <header className="mb-8 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
                 <svg
-                  className="h-8 w-8 text-emerald-600"
+                  className="h-8 w-8 text-emerald-700"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -179,7 +179,7 @@ const UserRegisterContent: React.FC = () => {
               <p className="text-gray-600">
                 Preencha os dados abaixo para criar um novo usuário no sistema
               </p>
-            </div>
+            </header>
 
             {error && (
               <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4">
@@ -298,10 +298,11 @@ const UserRegisterContent: React.FC = () => {
                   Empresa
                 </h2>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="companyId" className="block text-sm font-medium text-gray-700">
                     Empresa <span className="text-red-500">*</span>
                   </label>
                   <select
+                    id="companyId"
                     {...register('companyId', { valueAsNumber: true })}
                     className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm transition-colors focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                   >
@@ -427,7 +428,7 @@ const UserRegisterContent: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 rounded-md bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex-1 rounded-md bg-emerald-700 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center">
@@ -440,20 +441,20 @@ const UserRegisterContent: React.FC = () => {
                 </button>
               </div>
             </form>
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
     </>
   )
 }
 
 const UserRegisterLoading: React.FC = () => (
-  <div className="flex min-h-screen items-center justify-center">
+  <main className="flex min-h-screen items-center justify-center">
     <div className="text-center">
       <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
       <p className="text-gray-600">Carregando...</p>
     </div>
-  </div>
+  </main>
 )
 
 export default function UserRegisterPage() {

@@ -22,7 +22,7 @@ function SubmitButton() {
   return (
     <button
       type="submit"
-      className="mt-6 flex w-full items-center justify-center rounded-lg bg-green-500 py-3 text-lg font-semibold text-white transition hover:bg-green-600 disabled:opacity-50"
+      className="mt-6 flex w-full items-center justify-center rounded-lg bg-green-700 py-3 text-lg font-semibold text-white transition hover:bg-green-800 disabled:opacity-50"
       disabled={pending}
     >
       {pending ? <Loader className="h-6 w-6 animate-spin" /> : 'ACESSAR'}
@@ -87,9 +87,12 @@ export default function Login() {
 
   return (
     <>
-      <div className="flex min-h-screen w-full items-center justify-center bg-gray-100">
+      <main className="flex min-h-screen w-full items-center justify-center bg-gray-100">
         <div className="flex h-screen w-full overflow-hidden bg-white">
-          <div className="hidden h-full items-center justify-center bg-gradient-to-br from-green-400 to-teal-500 md:flex md:w-1/2">
+          <aside
+            className="hidden h-full items-center justify-center bg-gradient-to-br from-green-400 to-teal-500 md:flex md:w-1/2"
+            aria-label="Imagem decorativa de pets"
+          >
             <div className="relative h-full w-full">
               <Image
                 src="/images/bg-pets.png"
@@ -101,13 +104,13 @@ export default function Login() {
                 className="object-cover"
               />
             </div>
-          </div>
+          </aside>
 
-          <div className="mt-10 flex h-full w-full flex-col items-center justify-center p-10 md:w-1/2">
+          <section className="mt-10 flex h-full w-full flex-col items-center justify-center p-10 md:w-1/2">
             <div className="w-full max-w-md">
-              <h2 className="text-center font-poppins text-4xl font-bold text-green-700">
+              <h1 className="text-center font-poppins text-4xl font-bold text-green-700">
                 LOGIN ADMINISTRADOR
-              </h2>
+              </h1>
 
               <FormProvider {...methods}>
                 <form className="mt-10 space-y-6" action={formAction}>
@@ -128,16 +131,16 @@ export default function Login() {
                   <SubmitButton />
 
                   <div className="mt-4 text-center">
-                    <span className="cursor-pointer text-sm text-green-600 transition-colors hover:text-green-700 hover:underline">
+                    <span className="cursor-pointer text-sm text-green-700 transition-colors hover:text-green-800 hover:underline">
                       Esqueceu sua senha?
                     </span>
                   </div>
                 </form>
               </FormProvider>
             </div>
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
       <Footer />
     </>
   )

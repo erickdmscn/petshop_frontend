@@ -231,6 +231,8 @@ export default function CreateAppointment({
                 onClick={handleClose}
                 disabled={isProcessing}
                 className="text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Fechar modal"
+                title="Fechar"
               >
                 <XCircle className="h-5 w-5 md:h-6 md:w-6" />
               </button>
@@ -366,7 +368,7 @@ export default function CreateAppointment({
                   <button
                     type="submit"
                     disabled={isProcessing}
-                    className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400 md:py-3 md:text-base"
+                    className="flex-1 rounded-lg bg-emerald-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400 md:py-3 md:text-base"
                   >
                     {isProcessing ? 'Criando...' : 'Criar Agendamento'}
                   </button>
@@ -399,7 +401,7 @@ export default function CreateAppointment({
             <div className="flex gap-3">
               <button
                 onClick={handleShowServices}
-                className="flex-1 rounded-lg bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 md:text-base"
+                className="flex-1 rounded-lg bg-emerald-700 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 md:text-base"
               >
                 Sim, associar serviços
               </button>
@@ -423,6 +425,8 @@ export default function CreateAppointment({
                 onClick={handleClose}
                 disabled={isProcessing}
                 className="text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Fechar modal"
+                title="Fechar"
               >
                 <XCircle className="h-5 w-5 md:h-6 md:w-6" />
               </button>
@@ -512,7 +516,7 @@ export default function CreateAppointment({
               <button
                 onClick={handleAssociateServices}
                 disabled={isProcessing || selectedServiceIds.length === 0}
-                className="flex-1 rounded-lg bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400 md:text-base"
+                className="flex-1 rounded-lg bg-emerald-700 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400 md:text-base"
               >
                 {isProcessing ? 'Associando...' : 'Associar Serviços'}
               </button>

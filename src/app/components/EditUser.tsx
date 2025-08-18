@@ -84,18 +84,27 @@ export default function EditUser({
   if (!isOpen || !user) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-semibold">Editar Tipo de Usuário</h3>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-user-title"
+    >
+      <section className="w-full max-w-lg rounded-lg bg-white p-6">
+        <header className="mb-6 flex items-center justify-between">
+          <h3 id="edit-user-title" className="text-xl font-semibold">
+            Editar Tipo de Usuário
+          </h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
             disabled={isSubmitting}
+            aria-label="Fechar modal"
+            title="Fechar"
           >
             <XCircle className="h-6 w-6" />
           </button>
-        </div>
+        </header>
 
         {error && (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3">
@@ -161,7 +170,7 @@ export default function EditUser({
             </button>
           )}
         </div>
-      </div>
+      </section>
     </div>
   )
 }

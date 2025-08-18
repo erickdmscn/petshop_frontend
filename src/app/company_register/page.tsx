@@ -141,12 +141,12 @@ const CompanyRegister: NextPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <main className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent"></div>
           <p className="text-gray-600">Verificando permissões...</p>
         </div>
-      </div>
+      </main>
     )
   }
 
@@ -156,14 +156,14 @@ const CompanyRegister: NextPage = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 py-8">
+      <main className="min-h-screen bg-gray-50 py-8">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-lg bg-white p-8 shadow-lg">
+          <section className="rounded-lg bg-white p-8 shadow-lg">
             {/* Header */}
-            <div className="mb-8 text-center">
+            <header className="mb-8 text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
                 <svg
-                  className="h-8 w-8 text-emerald-600"
+                  className="h-8 w-8 text-emerald-700"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -182,7 +182,7 @@ const CompanyRegister: NextPage = () => {
               <p className="text-gray-600">
                 Preencha os dados da empresa para continuar
               </p>
-            </div>
+            </header>
 
             {(state.message || state.error) && (
               <div
@@ -278,7 +278,7 @@ const CompanyRegister: NextPage = () => {
                             id="postalCode"
                             type="text"
                             placeholder="00000-000"
-                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-500 shadow-sm transition-colors focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                            className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
                             {...methods.register('postalCode')}
                             onBlur={handleCEPBlur}
                             onChange={handleCEPChange}
@@ -312,15 +312,15 @@ const CompanyRegister: NextPage = () => {
 
                 <button
                   type="submit"
-                  className="w-full rounded-md bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                  className="w-full rounded-md bg-emerald-700 px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                 >
                   Cadastrar Empresa
                 </button>
               </form>
             </FormProvider>
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
     </>
   )
 }

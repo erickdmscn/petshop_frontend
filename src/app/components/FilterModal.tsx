@@ -140,7 +140,7 @@ export default function FilterModal({
               type="checkbox"
               checked={value}
               onChange={(e) => handleFilterChange(filter.key, e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+              className="h-4 w-4 rounded border-gray-300 text-emerald-700 focus:ring-emerald-500"
             />
             <span className="text-sm text-gray-700">
               {filter.placeholder || 'Ativo'}
@@ -158,7 +158,6 @@ export default function FilterModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-4 md:p-8">
-        {/* Header */}
         <div className="mb-4 flex items-center justify-between md:mb-6">
           <h3 className="text-lg font-bold text-gray-800 md:text-xl">
             {title}
@@ -166,12 +165,13 @@ export default function FilterModal({
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
+            aria-label="Fechar modal"
+            title="Fechar"
           >
             <X className="h-5 w-5 md:h-6 md:w-6" />
           </button>
         </div>
 
-        {/* Filters */}
         <div className="mb-6 space-y-4">
           {filters.map((filter) => (
             <div key={filter.key} className="space-y-2">
@@ -181,7 +181,6 @@ export default function FilterModal({
           ))}
         </div>
 
-        {/* Actions */}
         <div className="flex gap-3">
           <button
             onClick={handleClearAll}
@@ -192,7 +191,7 @@ export default function FilterModal({
           <button
             onClick={handleApply}
             disabled={!hasChanges}
-            className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400 md:py-3 md:text-base"
+            className="flex-1 rounded-lg bg-emerald-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400 md:py-3 md:text-base"
           >
             Aplicar
           </button>

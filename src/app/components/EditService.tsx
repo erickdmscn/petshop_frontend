@@ -98,6 +98,8 @@ export default function EditService({
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
             disabled={isSubmitting}
+            aria-label="Fechar modal"
+            title="Fechar"
           >
             <XCircle className="h-6 w-6" />
           </button>
@@ -162,7 +164,7 @@ export default function EditService({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 rounded-lg bg-emerald-600 py-2 text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 rounded-lg bg-emerald-700 py-2 text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
               </button>

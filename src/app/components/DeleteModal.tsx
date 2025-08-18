@@ -66,6 +66,8 @@ export default function DeleteModal({
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
             disabled={isDeleting}
+            aria-label="Fechar modal"
+            title="Fechar"
           >
             <XCircle className="h-6 w-6" />
           </button>

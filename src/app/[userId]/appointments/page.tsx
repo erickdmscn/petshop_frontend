@@ -111,7 +111,6 @@ export default function AppointmentsPage() {
 
   const handleApplyFilters = (filters: Record<string, any>) => {
     setActiveFilters(filters)
-    // Aqui você pode implementar a lógica de filtragem
   }
 
   const safeAppointments = appointments || []
@@ -121,15 +120,12 @@ export default function AppointmentsPage() {
     return pet ? pet.fullName : `Pet ${petId}`
   }
 
-  // Filtrar appointments baseado no termo de busca e filtros ativos
   const filteredAppointments = safeAppointments.filter((appointment) => {
-    // Filtro por nome do pet
     const petName = getPetName(appointment.petId).toLowerCase()
     if (!petName.includes(searchTerm.toLowerCase())) {
       return false
     }
 
-    // Filtro por status do agendamento
     if (
       activeFilters.status &&
       appointment.statusAppointments.toString() !== activeFilters.status
@@ -137,7 +133,6 @@ export default function AppointmentsPage() {
       return false
     }
 
-    // Filtro por status do pagamento
     if (
       activeFilters.paymentStatus &&
       appointment.paymentStatus.toString() !== activeFilters.paymentStatus
@@ -145,7 +140,6 @@ export default function AppointmentsPage() {
       return false
     }
 
-    // Filtro por período
     if (activeFilters.dateRange) {
       const appointmentDate = new Date(appointment.appointmentDate)
 
@@ -223,7 +217,6 @@ export default function AppointmentsPage() {
 
   return (
     <>
-      {/* Cabeçalho reorganizado */}
       <div className="mb-6">
         <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
@@ -238,7 +231,7 @@ export default function AppointmentsPage() {
           </div>
           <button
             onClick={() => setShowCreateAppointment(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 md:px-6 md:py-3 md:text-base"
+            className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 md:px-6 md:py-3 md:text-base"
           >
             <Plus className="h-4 w-4 md:h-5 md:w-5" />
             Novo Agendamento
@@ -273,12 +266,12 @@ export default function AppointmentsPage() {
       <div className="mb-6 rounded-xl border bg-white p-4 shadow-sm md:p-6">
         <div className="flex items-center gap-4">
           <div className="rounded-lg bg-emerald-50 p-3">
-            <DollarSign className="h-6 w-6 text-emerald-600" />
+            <DollarSign className="h-6 w-6 text-emerald-700" />
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-medium text-gray-600 md:text-base">
+            <h2 className="text-sm font-medium text-gray-600 md:text-base">
               Receita Total dos Agendamentos
-            </h3>
+            </h2>
             <p className="text-2xl font-bold text-gray-800 md:text-3xl">
               R${' '}
               {filteredAppointments
@@ -499,7 +492,7 @@ export default function AppointmentsPage() {
               <div className="flex justify-end pt-4">
                 <button
                   onClick={() => handleDeleteAppointment(appointment)}
-                  className="flex items-center gap-1 rounded-lg bg-red-50 px-2 py-1 text-red-600 transition-colors hover:bg-red-100 md:gap-2 md:px-3 md:py-2"
+                  className="flex items-center gap-1 rounded-lg bg-red-50 px-2 py-1 text-red-700 transition-colors hover:bg-red-100 md:gap-2 md:px-3 md:py-2"
                   title="Deletar agendamento"
                 >
                   <Trash2 className="h-3 w-3 md:h-4 md:w-4" />

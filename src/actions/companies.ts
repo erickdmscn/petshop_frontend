@@ -68,7 +68,7 @@ export async function createCompanyAction(
 
     const response = await authenticatedFetch(ENDPOINTS.COMPANIES, {
       method: 'POST',
-      body: sanitizedData as any,
+      body: JSON.stringify(sanitizedData),
     })
 
     if (!response.ok) {
@@ -148,7 +148,7 @@ export async function updateCompanyAction(
 
     const response = await authenticatedFetch(`${ENDPOINTS.COMPANIES}/${id}`, {
       method: 'PUT',
-      body: sanitizedData as any,
+      body: JSON.stringify(sanitizedData),
     })
 
     if (!response.ok) {

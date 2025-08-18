@@ -5,20 +5,18 @@ import { AlertCircle, LogIn } from 'lucide-react'
 
 export default function UnauthorizedPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md text-center">
-        <div className="mb-8">
+    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <section className="w-full max-w-md text-center">
+        <header className="mb-8">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-100">
             <AlertCircle className="h-10 w-10 text-red-600" />
           </div>
-        </div>
-
-        <h1 className="mb-4 text-3xl font-bold text-gray-900">Acesso Negado</h1>
-
-        <p className="mb-8 text-gray-600">
-          Você precisa estar logado para acessar esta página. Sua sessão pode
-          ter expirado ou você não tem permissão para visualizar este conteúdo.
-        </p>
+          <h1 className="mb-4 text-3xl font-bold text-gray-900">Acesso Negado</h1>
+          <p className="mb-8 text-gray-600">
+            Você precisa estar logado para acessar esta página. Sua sessão pode
+            ter expirado ou você não tem permissão para visualizar este conteúdo.
+          </p>
+        </header>
 
         <div className="space-y-4">
           <Link
@@ -30,12 +28,12 @@ export default function UnauthorizedPage() {
           </Link>
         </div>
 
-        <div className="mt-8 text-sm text-gray-500">
+        <footer className="mt-8 text-sm text-gray-500">
           <p>
             Se você acredita que isso é um erro, entre em contato com o suporte.
           </p>
-        </div>
-      </div>
-    </div>
+        </footer>
+      </section>
+    </main>
   )
 }
