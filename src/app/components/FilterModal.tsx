@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
+import FocusTrap from 'focus-trap-react'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 
 interface FilterOption {
   value: string | number
@@ -37,6 +39,8 @@ export default function FilterModal({
   const [filterValues, setFilterValues] =
     useState<Record<string, any>>(initialValues)
   const [hasChanges, setHasChanges] = useState(false)
+
+  useEscapeKey(isOpen, onClose)
 
   useEffect(() => {
     if (isOpen) {
@@ -167,47 +171,49 @@ export default function FilterModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-4 md:p-8">
-        <div className="mb-4 flex items-center justify-between md:mb-6">
-          <h3 className="text-lg font-bold text-gray-800 md:text-xl">
-            {title}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-            aria-label="Fechar modal"
-            title="Fechar"
-          >
-            <X className="h-5 w-5 md:h-6 md:w-6" />
-          </button>
-        </div>
+    <FocusTrap>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-4 md:p-8">
+          <div className="mb-4 flex items-center justify-between md:mb-6">
+            <h3 className="text-lg font-bold text-gray-800 md:text-xl">
+              {title}
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+              aria-label="Fechar modal"
+              title="Fechar"
+            >
+              <X className="h-5 w-5 md:h-6 md:w-6" />
+            </button>
+          </div>
 
-        <div className="mb-6 space-y-4">
-          {filters.map((filter) => (
-            <div key={filter.key} className="space-y-2">
-              <label className="block text-gray-700">{filter.label}</label>
-              {renderFilterInput(filter)}
-            </div>
-          ))}
-        </div>
+          <div className="mb-6 space-y-4">
+            {filters.map((filter) => (
+              <div key={filter.key} className="space-y-2">
+                <label className="block text-gray-700">{filter.label}</label>
+                {renderFilterInput(filter)}
+              </div>
+            ))}
+          </div>
 
-        <div className="flex gap-3">
-          <button
-            onClick={handleClearAll}
-            className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 md:py-3 md:text-base"
-          >
-            Limpar
-          </button>
-          <button
-            onClick={handleApply}
-            disabled={!hasChanges}
-            className="flex-1 rounded-lg bg-emerald-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400 md:py-3 md:text-base"
-          >
-            Aplicar
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleClearAll}
+              className="flex-1 rounded-lg border border-gray-300 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 md:py-3 md:text-base"
+            >
+              Limpar
+            </button>
+            <button
+              onClick={handleApply}
+              disabled={!hasChanges}
+              className="flex-1 rounded-lg bg-emerald-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400 md:py-3 md:text-base"
+            >
+              Aplicar
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </FocusTrap>
   )
 }

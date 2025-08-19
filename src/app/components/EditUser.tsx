@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { XCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
+import FocusTrap from 'focus-trap-react'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { updateUserTypeAction } from '@/actions/users'
 
 interface User {
@@ -38,6 +40,8 @@ export default function EditUser({
   user,
 }: EditUserProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEscapeKey(isOpen, onClose, !isSubmitting)
   const [error, setError] = useState<string | null>(null)
 
   const methods = useForm<UserFormData>({
@@ -86,93 +90,96 @@ export default function EditUser({
   if (!isOpen || !user) return null
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="edit-user-title"
-    >
-      <section className="w-full max-w-lg rounded-lg bg-white p-6">
-        <header className="mb-6 flex items-center justify-between">
-          <h3 id="edit-user-title" className="text-xl font-semibold">
-            Editar Tipo de Usuário
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-            disabled={isSubmitting}
-            aria-label="Fechar modal"
-            title="Fechar"
-          >
-            <XCircle className="h-6 w-6" />
-          </button>
-        </header>
-
-        {error && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3">
-            <p className="text-sm text-red-600">{error}</p>
-          </div>
-        )}
-
-        <div className="mb-6 space-y-4">
-          <div>
-            <p className="text-sm text-gray-500">Nome do Usuário</p>
-            <p className="font-medium text-gray-900">{user.fullName}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Email</p>
-            <p className="font-medium text-gray-900">{user.email}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Tipo Atual</p>
-            <span
-              className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                user.userType === 'Admin'
-                  ? 'bg-purple-100 text-purple-800'
-                  : user.userType === 'Employer'
-                    ? 'bg-blue-100 text-blue-800'
-                    : 'bg-green-100 text-green-800'
-              }`}
-            >
-              {user.userType}
-            </span>
-          </div>
-        </div>
-
-        {user.userType === 'Costumer' ? (
-          <div className="mb-6">
-            <p className="text-sm text-gray-600">
-              Esta ação irá promover o usuário de <strong>Costumer</strong> para{' '}
-              <strong>Employer</strong>.
-            </p>
-          </div>
-        ) : (
-          <div className="mb-6">
-            <p className="text-sm text-gray-500">
-              Este usuário já é do tipo {user.userType} e não pode ser alterado.
-            </p>
-          </div>
-        )}
-
-        <div className="flex justify-end space-x-3">
-          <button
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-          {user.userType === 'Costumer' && (
+    <FocusTrap>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-user-title"
+      >
+        <section className="w-full max-w-lg rounded-lg bg-white p-6">
+          <header className="mb-6 flex items-center justify-between">
+            <h3 id="edit-user-title" className="text-xl font-semibold">
+              Editar Tipo de Usuário
+            </h3>
             <button
-              onClick={methods.handleSubmit(onSubmit)}
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
               disabled={isSubmitting}
-              className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              aria-label="Fechar modal"
+              title="Fechar"
             >
-              {isSubmitting ? 'Atualizando...' : 'Promover para Employer'}
+              <XCircle className="h-6 w-6" />
             </button>
+          </header>
+
+          {error && (
+            <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
           )}
-        </div>
-      </section>
-    </div>
+
+          <div className="mb-6 space-y-4">
+            <div>
+              <p className="text-sm text-gray-500">Nome do Usuário</p>
+              <p className="font-medium text-gray-900">{user.fullName}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Email</p>
+              <p className="font-medium text-gray-900">{user.email}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Tipo Atual</p>
+              <span
+                className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                  user.userType === 'Admin'
+                    ? 'bg-purple-100 text-purple-800'
+                    : user.userType === 'Employer'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-green-100 text-green-800'
+                }`}
+              >
+                {user.userType}
+              </span>
+            </div>
+          </div>
+
+          {user.userType === 'Costumer' ? (
+            <div className="mb-6">
+              <p className="text-sm text-gray-600">
+                Esta ação irá promover o usuário de <strong>Costumer</strong>{' '}
+                para <strong>Employer</strong>.
+              </p>
+            </div>
+          ) : (
+            <div className="mb-6">
+              <p className="text-sm text-gray-500">
+                Este usuário já é do tipo {user.userType} e não pode ser
+                alterado.
+              </p>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            {user.userType === 'Costumer' && (
+              <button
+                onClick={methods.handleSubmit(onSubmit)}
+                disabled={isSubmitting}
+                className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isSubmitting ? 'Atualizando...' : 'Promover para Employer'}
+              </button>
+            )}
+          </div>
+        </section>
+      </div>
+    </FocusTrap>
   )
 }
