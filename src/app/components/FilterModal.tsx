@@ -12,7 +12,7 @@ interface FilterOption {
 interface FilterField {
   key: string
   label: string
-  type: 'select' | 'date' | 'dateRange' | 'checkbox'
+  type: 'select' | 'date' | 'dateRange' | 'checkbox' | 'search'
   options?: FilterOption[]
   placeholder?: string
 }
@@ -148,6 +148,17 @@ export default function FilterModal({
           </label>
         )
 
+      case 'search':
+        return (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => handleFilterChange(filter.key, e.target.value)}
+            placeholder={filter.placeholder || 'Digite para buscar...'}
+            className="w-full rounded-md bg-gray-100 p-2 outline-none focus:ring-2 focus:ring-emerald-400"
+          />
+        )
+
       default:
         return null
     }
@@ -191,7 +202,7 @@ export default function FilterModal({
           <button
             onClick={handleApply}
             disabled={!hasChanges}
-            className="flex-1 rounded-lg bg-emerald-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400 md:py-3 md:text-base"
+            className="flex-1 rounded-lg bg-emerald-700 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-400 md:py-3 md:text-base"
           >
             Aplicar
           </button>
