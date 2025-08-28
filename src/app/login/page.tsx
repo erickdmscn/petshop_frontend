@@ -8,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { loginSchema, type LoginFormData } from '../schemas/loginSchema'
 import { loginAction } from '@/actions'
 import InputForm from '../components/InputForm'
-import Footer from '../components/Footer'
 import toast from 'react-hot-toast'
 
 interface LoginState {
@@ -129,19 +128,12 @@ export default function Login() {
                   />
 
                   <SubmitButton />
-
-                  <div className="mt-4 text-center">
-                    <span className="cursor-pointer text-sm text-green-700 transition-colors hover:text-green-800 hover:underline">
-                      Esqueceu sua senha?
-                    </span>
-                  </div>
                 </form>
               </FormProvider>
             </div>
           </section>
         </div>
       </main>
-      <Footer />
     </>
   )
 }
